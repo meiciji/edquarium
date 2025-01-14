@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const LanguageArtsGame = ({ route }: any) => {
-  const { gameMode, onPointsUpdate } = route.params;
+interface RouteParams {
+  gameMode: 'Storytelling' | 'Spelling' | 'Grammar' | 'Comprehension';
+  onPointsUpdate: (points: number) => void;
+  onGameComplete: (gameMode: string) => void;
+}
+
+const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams }, navigation: any }) => {
+  const { gameMode, onPointsUpdate, onGameComplete } = route.params;
 
   const [questions, setQuestions] = useState<any>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -12,11 +19,19 @@ const LanguageArtsGame = ({ route }: any) => {
   const [answerFeedback, setAnswerFeedback] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
   const [gameComplete, setGameComplete] = useState(false); // New state to track game completion
-  const [achievement, setAchievement] = useState("Master of Language Arts"); // Example achievement
+  const [achievement, setAchievement] = useState(""); // State for achievement
+
+  const achievements = {
+    Storytelling: "Master of Storytelling",
+    Spelling: "Master of Spelling",
+    Grammar: "Master of Grammar",
+    Comprehension: "Master of Comprehension",
+  };
 
   useEffect(() => {
     const generatedQuestions = generateQuestions(gameMode);
     setQuestions(generatedQuestions);
+    setAchievement(achievements[gameMode]); // Set the achievement based on the game mode
   }, [gameMode]);
 
   const handleComplete = (isCorrect: boolean) => {
@@ -38,6 +53,7 @@ const LanguageArtsGame = ({ route }: any) => {
     // Check if all questions are answered
     if (currentQuestionIndex === questions.length - 1) {
       setGameComplete(true); // Mark the game as complete
+      onGameComplete(gameMode); // Call onGameComplete when the game is complete
     }
   };
 
@@ -45,12 +61,35 @@ const LanguageArtsGame = ({ route }: any) => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
+  const addToDashboard = async () => {
+    try {
+      const savedAchievements = await AsyncStorage.getItem("achievements");
+      const achievementsList = savedAchievements ? JSON.parse(savedAchievements) : [];
+  
+      if (!achievementsList.includes(achievement)) {
+        achievementsList.push(achievement);
+        await AsyncStorage.setItem("achievements", JSON.stringify(achievementsList));
+        Alert.alert("Success", "Achievement added to dashboard!", [
+          { text: "OK" },
+          { text: "Save and Exit", onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        Alert.alert("Info", "Achievement already added to dashboard.", [
+          { text: "OK" },
+          { text: "Save and Exit", onPress: () => navigation.goBack() }
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to save achievement", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {showInstruction ? (
         <InstructionScreen gameMode={gameMode} onSkip={skipInstruction} />
       ) : gameComplete ? (
-        <CongratsScreen score={score} achievement={achievement} onAddToDashboard={() => {}} />
+        <CongratsScreen score={score} achievement={achievement} onAddToDashboard={addToDashboard} onGameComplete={onGameComplete} gameMode={gameMode} />
       ) : currentQuestion ? (
         <>
           <Text style={styles.title}>{gameMode} Game</Text>
@@ -79,7 +118,11 @@ const LanguageArtsGame = ({ route }: any) => {
   );
 };
 
-const CongratsScreen = ({ score, achievement, onAddToDashboard }: any) => {
+const CongratsScreen = ({ score, achievement, onAddToDashboard, onGameComplete, gameMode }: any) => {
+  useEffect(() => {
+    onGameComplete(gameMode); // Call onGameComplete when the CongratsScreen is rendered
+  }, [onGameComplete, gameMode]);
+
   return (
     <View style={styles.congratsScreen}>
       <Text style={styles.congratsTitle}>Congrats! You won!</Text>
@@ -213,48 +256,48 @@ const generateQuestions = (mode: string) => {
           },
         ];
   
-      case "Grammar":
-        return [
-          {
-            id: "1",
-            question: "Which punctuation mark should be used at the end of the sentence?",
-            sentence: "What a beautiful day",
-            options: [".", "?", "!"],
-            correct: "?",
-          },
-          {
-            id: "2",
-            question: "Which punctuation mark should be used to separate two independent clauses?",
-            sentence: "I wanted to go to the park, but it started raining",
-            options: [".", ",", ";"],
-            correct: ",",
-          },
-          {
-            id: "3",
-            question: "Which sentence is correctly punctuated?",
-            sentence: "My favorite color is blue and my sister loves green.",
-            options: [
-              "My favorite color is blue, and my sister loves green.",
-              "My favorite color is blue and, my sister loves green.",
-              "My favorite color is blue and my sister loves green.",
-            ],
-            correct: "My favorite color is blue, and my sister loves green.",
-          },
-          {
-            id: "4",
-            question: "Which punctuation should be added to the sentence?",
-            sentence: "Hello how are you doing today",
-            options: [".", "!", "?"],
-            correct: "?",
-          },
-          {
-            id: "5",
-            question: "What punctuation should be used after an introductory phrase?",
-            sentence: "After the show we went for ice cream",
-            options: [",", ".", ";"],
-            correct: ",",
-          },
-        ];
+        case "Grammar":
+          return [
+            {
+              id: "1",
+              question: "What punctuation mark is needed to complete this exclamatory sentence?",
+              sentence: "What a beautiful day__",
+              options: [".", "?", "!"],
+              correct: "!",
+            },
+            {
+              id: "2",
+              question: "Which punctuation mark correctly joins these two independent clauses?",
+              sentence: "I wanted to go to the park__ it started raining.",
+              options: [".", ",", ";"],
+              correct: ",",
+            },
+            {
+              id: "3",
+              question: "Select the sentence that uses proper punctuation for a compound sentence.",
+              sentence: "My favorite color is blue and my sister loves green.",
+              options: [
+                "My favorite color is blue, and my sister loves green.",
+                "My favorite color is blue and, my sister loves green.",
+                "My favorite color is blue and my sister loves green.",
+              ],
+              correct: "My favorite color is blue, and my sister loves green.",
+            },
+            {
+              id: "4",
+              question: "Which punctuation mark is appropriate to end this question?",
+              sentence: "Hello, how are you doing today__",
+              options: [".", "!", "?"],
+              correct: "?",
+            },
+            {
+              id: "5",
+              question: "What punctuation mark should be added after the introductory phrase?",
+              sentence: "After the show__ we went for ice cream.",
+              options: [",", ".", ";"],
+              correct: ",",
+            },
+          ];  
   
       case "Comprehension":
         return [
@@ -437,7 +480,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   story: {
-    fontSize: 16,
+    fontSize: 20,
     marginBottom: 20,
     color: "#FF7043",
     textAlign: "center",
@@ -451,7 +494,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     margin: 10,
-    width: 200,
+    width: 300,
     alignItems: "center",
     justifyContent: "center",
   },

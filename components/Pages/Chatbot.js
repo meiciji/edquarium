@@ -38,7 +38,7 @@ const Chatbot = () => {
         },
         {
           headers: {
-            'Authorization': `Bearer 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`, // Replace with your OpenAI API key
+            'Authorization': `Bearer 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`, // Replace with your OpenAI API key
           },
         }
       );
@@ -53,6 +53,7 @@ const Chatbot = () => {
     } catch (error) {
       console.error("Error fetching AI response: ", error);
       console.error("Error details: ", error.response ? error.response.data : error.message);
+      console.log("Error response data:", error.response ? error.response.data : "No response data");
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: 'ai', text: "Sorry, something went wrong." },
@@ -76,7 +77,7 @@ const Chatbot = () => {
             key={index}
             style={[styles.message, message.sender === 'user' ? styles.userMessage : styles.aiMessage]}
           >
-            <Text style={styles.sender}>{message.sender === 'user' ? 'You' : 'AI'}:</Text>
+            <Text style={styles.sender}>{message.sender === 'user' ? 'You' : 'Dr. Octo'}:</Text>
             <Text style={styles.messageText}>{message.text}</Text>
           </View>
         ))}

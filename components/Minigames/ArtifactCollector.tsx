@@ -6,8 +6,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 // Define the navigation types for your app
 type RootStackParamList = {
   ArtifactCollector: {
-    gameMode: "Ancient History" | "Medieval" | "Modern" | "WorldWars";
+    gameMode: "Ancient History" | "Medieval" | "Modern" | "World Wars";
     setTotalPoints: React.Dispatch<React.SetStateAction<number>>;  // Add setTotalPoints here
+    onGameComplete: (section: string) => void; // Add onGameComplete here
   };
 };
 
@@ -18,10 +19,10 @@ type ArtifactCollectorProps = {
 };
 
 const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation }) => {
-  const { gameMode } = route.params; // Retrieve the game mode from the params
+  const { gameMode, onGameComplete } = route.params; // Retrieve the game mode, setTotalPoints, and onGameComplete from the params
   const [points, setPoints] = useState(0); // Points for current game session
-  const [totalPoints, setTotalPoints] = useState(0); // Accumulated total points
   const [artifactIndex, setArtifactIndex] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0); // Add totalPoints state
   const [showError, setShowError] = useState(false);
   const [showStory, setShowStory] = useState(false);
   const [modes, setModes] = useState<any[]>([]); // Initialize as an empty array to avoid undefined errors
@@ -29,6 +30,7 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
   const [artifactImage, setArtifactImage] = useState<ImageSourcePropType>(); // State for storing the image (using ImageSourcePropType)
   const [loading, setLoading] = useState(true); // Add loading state
   const [gameOver, setGameOver] = useState(false); // State to track if the game is over
+  const [showInstructions, setShowInstructions] = useState(true); // State to control instruction screen visibility
 
   // Artifact mapping based on the game mode
   const artifactMapping: Record<string, { name: string, image: ImageSourcePropType }> = {
@@ -44,7 +46,7 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
       name: "Vintage Camera",
       image: require('../../assets/images/camera.jpeg'),
     },
-    "WorldWars": {
+    "World Wars": {
       name: "WWII Soldier's Helmet",
       image: require('../../assets/images/helmet.jpg'),
     },
@@ -95,25 +97,25 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
               question: "Who was the famous knight of the Round Table?",
               options: ["Lancelot", "Arthur", "Merlin"],
               correctAnswer: "Lancelot",
-              story: "Lancelot was one of King Arthur's most trusted knights, known for his bravery."
+              story: "Correct! Lancelot was one of King Arthur's most trusted knights, known for his bravery."
             },
             {
               question: "Which battle marked the end of the Hundred Years' War?",
               options: ["Battle of Agincourt", "Battle of Waterloo", "Battle of Hastings"],
               correctAnswer: "Battle of Agincourt",
-              story: "The Battle of Agincourt in 1415 marked a turning point in the Hundred Years' War."
+              story: "Correct! The Battle of Agincourt in 1415 marked a turning point in the Hundred Years' War."
             },
             {
               question: "What was the name of the medieval fortress used to protect territories?",
               options: ["Castle", "Palace", "Fortress"],
               correctAnswer: "Castle",
-              story: "Castles were fortresses used for defense and as royal residences."
+              story: "Correct! Castles were fortresses used for defense and as royal residences."
             },
             {
               question: "Who wrote the famous play 'Romeo and Juliet'?",
               options: ["Shakespeare", "Dickens", "Hemingway"],
               correctAnswer: "Shakespeare",
-              story: "William Shakespeare wrote 'Romeo and Juliet,' a timeless tragedy of love."
+              story: "Correct! William Shakespeare wrote 'Romeo and Juliet,' a timeless tragedy of love."
             }
           ];
           break;
@@ -123,47 +125,59 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
               question: "Who invented the light bulb?",
               options: ["Thomas Edison", "Nikola Tesla", "Albert Einstein"],
               correctAnswer: "Thomas Edison",
-              story: "Thomas Edison invented the practical light bulb, revolutionizing the world."
+              story: "Correct! Thomas Edison invented the practical light bulb, revolutionizing the world."
             },
             {
               question: "What year did the first man land on the moon?",
               options: ["1969", "1959", "1979"],
               correctAnswer: "1969",
-              story: "In 1969, Neil Armstrong became the first human to walk on the moon."
+              story: "Correct! In 1969, Neil Armstrong became the first human to walk on the moon."
             },
             {
               question: "Which company developed the first personal computer?",
               options: ["Apple", "IBM", "Microsoft"],
               correctAnswer: "Apple",
-              story: "Apple introduced the first personal computer, changing technology forever."
+              story: "Correct! Apple introduced the first personal computer, changing technology forever."
             },
             {
               question: "Who developed the theory of relativity?",
               options: ["Isaac Newton", "Albert Einstein", "Galileo"],
               correctAnswer: "Albert Einstein",
-              story: "Albert Einstein developed the theory of relativity, reshaping our understanding of physics."
+              story: "Correct! Albert Einstein developed the theory of relativity, reshaping our understanding of physics."
             }
           ];
           break;
-        case "WorldWars":
+        case "World Wars":
           gameData = [
             {
-              question: "What event triggered the start of World War I?",
-              options: ["Assassination of Archduke Ferdinand", "Invasion of Poland", "Pearl Harbor attack"],
-              correctAnswer: "Assassination of Archduke Ferdinand",
-              story: "The assassination of Archduke Ferdinand in 1914 triggered World War I."
+              question: "What started World War I?",
+              options: ["The shooting of Archduke Ferdinand", "The attack on Pearl Harbor", "The invasion of Poland"],
+              correctAnswer: "The shooting of Archduke Ferdinand",
+              story: "Correct! The shooting of Archduke Ferdinand in 1914 caused World War I to start."
             },
             {
-              question: "Which country was not part of the Allies in World War II?",
+              question: "Which country was on the side of the Axis powers in World War II?",
               options: ["Germany", "France", "United States"],
               correctAnswer: "Germany",
-              story: "Germany was part of the Axis Powers in World War II, opposing the Allies."
+              story: "Correct! Germany was part of the Axis powers alongside Italy and Japan, fighting against the Allies in World War II."
             },
             {
-              question: "What was the name of the operation that led to the D-Day invasion?",
-              options: ["Operation Barbarossa", "Operation Overlord", "Operation Valkyrie"],
+              question: "What was the big mission that took place on D-Day in World War II?",
+              options: ["Operation Overlord", "Operation Victory", "Operation Freedom"],
               correctAnswer: "Operation Overlord",
-              story: "Operation Overlord was the Allied invasion of Normandy during World War II."
+              story: "Correct! Operation Overlord was the mission where the Allies landed in Normandy to fight the enemy in World War II."
+            },
+            {
+              question: "Which event caused the United States to join World War II?",
+              options: ["The attack on Pearl Harbor", "The Battle of Britain", "The sinking of the Lusitania"],
+              correctAnswer: "The attack on Pearl Harbor",
+              story: "Correct! The attack on Pearl Harbor in 1941 made the United States join World War II."
+            },
+            {
+              question: "Who was the leader of Germany during World War II?",
+              options: ["Adolf Hitler", "Winston Churchill", "Franklin D. Roosevelt"],
+              correctAnswer: "Adolf Hitler",
+              story: "Correct! Adolf Hitler was the leader of Germany during World War II and led the country in the war against the Allies."
             }
           ];
           break;
@@ -183,6 +197,7 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
 
     loadGameData();
   }, [gameMode]);
+
   const handleAnswer = (option: string) => {
     if (modes[artifactIndex] && option === modes[artifactIndex].correctAnswer) {
       setPoints((prevPoints) => prevPoints + 10);  // Add points for correct answer
@@ -216,42 +231,65 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
   
 
   const handleSaveAndExit = () => {
-    // Save the points to totalPoints when exiting
-    if (route.params.setTotalPoints) {
-      route.params.setTotalPoints((prevTotal: number) => prevTotal + points);
-    }
+    onGameComplete(gameMode); // Mark the section as complete
     navigation.goBack(); // Navigate back to the home screen or wherever you need
   };
-  
+
+  const onStartGame = () => {
+    setShowInstructions(false);
+  };
+
+  const InstructionScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => {
+    return (
+      <View style={styles.instructionScreen}>
+        <Text style={styles.instructionText}>Welcome to Artifact Collector!</Text>
+        <Text style={styles.detailedInstructionsTitle}>How to Play:</Text>
+        <View style={styles.instructionsList}>
+          <Text style={styles.instructionItem}>• Answer questions correctly to collect artifacts.</Text>
+          <Text style={styles.instructionItem}>• Each correct answer earns you points.</Text>
+          <Text style={styles.instructionItem}>• Collect all artifacts to win the game.</Text>
+        </View>
+        <TouchableOpacity style={styles.startButton} onPress={onStartGame}>
+          <Text style={styles.startText}>Start Game</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{gameMode} Artifact Collector</Text>
-      {loading ? (
-        <Text>Loading...</Text>
+      {showInstructions ? (
+        <InstructionScreen onStartGame={onStartGame} />
       ) : (
         <>
-          <Text style={styles.points}>Points: {points}</Text>
-          {gameOver ? (
-            <View style={styles.finalScreen}>
-              <Text style={styles.message}>Game Over! You've earned a {artifact}</Text>
-              <Image source={artifactImage} style={styles.artifactImage} />
-              <TouchableOpacity style={styles.button} onPress={handleSaveAndExit}>
-                <Text style={styles.buttonText}>Save and Exit</Text>
-              </TouchableOpacity>
-              <Text style={styles.message}>Total Points: {totalPoints}</Text>
-            </View>
+          <Text style={styles.title}>{gameMode} Artifact Collector</Text>
+          {loading ? (
+            <Text>Loading...</Text>
           ) : (
-            <View>
-              <Text style={styles.question}>{modes[artifactIndex].question}</Text>
-              {modes[artifactIndex].options.map((option: string, index: number) => (
-                <TouchableOpacity key={index} onPress={() => handleAnswer(option)}>
-                  <Text style={styles.option}>{option}</Text>
-                </TouchableOpacity>
-              ))}
-              {showStory && <Text style={styles.story}>{modes[artifactIndex].story}</Text>}
-              {showError && <Text style={styles.error}>Wrong answer, try again!</Text>}
-            </View>
+            <>
+              <Text style={styles.points}>Points: {points}</Text>
+              {gameOver ? (
+                <View style={styles.finalScreen}>
+                  <Text style={styles.message}>Game Over! You've earned a {artifact}</Text>
+                  <Image source={artifactImage} style={styles.artifactImage} />
+                  <TouchableOpacity style={styles.button} onPress={handleSaveAndExit}>
+                    <Text style={styles.buttonText}>Save and Exit</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.message}>Total Points: {totalPoints}</Text>
+                </View>
+              ) : (
+                <View>
+                  <Text style={styles.question}>{modes[artifactIndex].question}</Text>
+                  {modes[artifactIndex].options.map((option: string, index: number) => (
+                    <TouchableOpacity key={index} onPress={() => handleAnswer(option)}>
+                      <Text style={styles.option}>{option}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  {showStory && <Text style={styles.story}>{modes[artifactIndex].story}</Text>}
+                  {showError && <Text style={styles.error}>Wrong answer, try again!</Text>}
+                </View>
+              )}
+            </>
           )}
         </>
       )}
@@ -293,7 +331,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     fontStyle: "italic",
-    color: "#007BFF",
+    color: "green",
   },
   error: {
     color: "red",
@@ -323,6 +361,43 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 10,
   },
+  instructionScreen: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  instructionText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0288D1",
+    marginBottom: 10,
+  },
+  detailedInstructionsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0288D1",
+    marginBottom: 10,
+  },
+  instructionsList: {
+    marginBottom: 20,
+  },
+  instructionItem: {
+    fontSize: 16,
+    color: "#0288D1",
+    marginBottom: 5,
+  },
+  startButton: {
+    backgroundColor: "#0288D1",
+    padding: 10,
+    borderRadius: 5,
+  },
+  startText: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  }
 });
 
 export default ArtifactCollector;

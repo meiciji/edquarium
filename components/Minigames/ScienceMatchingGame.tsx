@@ -10,6 +10,8 @@ type RootStackParamList = {
   ScienceMatchingGame: {
     gameMode: "biology" | "astronomy" | "physicalScience" | "chemistry";
     onPointsUpdate: (newPoints: number) => void;
+    onGameComplete: (section: string) => void;
+    section: string;
   };
 };
 
@@ -20,11 +22,62 @@ type ScienceMatchingGameProps = {
 };
 
 const ScienceMatchingGame: React.FC<ScienceMatchingGameProps> = ({ route, navigation }) => {
-  const { gameMode, onPointsUpdate } = route.params;
+  const { gameMode, onPointsUpdate, onGameComplete, section } = route.params;
   const [matches, setMatches] = useState<boolean[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [points, setPoints] = useState<number>(0);
   const [cards, setCards] = useState<{ id: number; content: string; type: "term" | "definition"; termId: number }[]>([]);
+  const [showInstructions, setShowInstructions] = useState<boolean>(true); // State to control instruction screen visibility
+
+  const InstructionScreen: React.FC<{ gameMode: string; onStartGame: () => void }> = ({ gameMode, onStartGame }) => {
+    let instructionText = "";
+    let detailedInstructions: string[] = [];
+  
+    if (gameMode === "biology") {
+      instructionText = "Biology Matching Game";
+      detailedInstructions = [
+        "Match the terms with their correct definitions.",
+        "Flip two cards at a time to find matching pairs.",
+        "Try to match all pairs with the fewest attempts!"
+      ];
+    } else if (gameMode === "astronomy") {
+      instructionText = "Astronomy Matching Game";
+      detailedInstructions = [
+        "Match the terms with their correct definitions.",
+        "Flip two cards at a time to find matching pairs.",
+        "Focus on the stars and planets to win!"
+      ];
+    } else if (gameMode === "physicalScience") {
+      instructionText = "Physical Science Matching Game";
+      detailedInstructions = [
+        "Match the terms with their correct definitions.",
+        "Flip two cards at a time to find matching pairs.",
+        "Explore the forces of science while you play!"
+      ];
+    } else if (gameMode === "chemistry") {
+      instructionText = "Chemistry Matching Game";
+      detailedInstructions = [
+        "Match the terms with their correct definitions.",
+        "Flip two cards at a time to find matching pairs.",
+        "Learn chemistry as you make matches!"
+      ];
+    }
+  
+    return (
+      <View style={styles.instructionScreen}>
+        <Text style={styles.instructionText}>{instructionText}</Text>
+        <Text style={styles.detailedInstructionsTitle}>How to Play:</Text>
+        <View style={styles.instructionsList}>
+          {detailedInstructions.map((instruction, index) => (
+            <Text key={index} style={styles.instructionItem}>• {instruction}</Text>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.startButton} onPress={onStartGame}>
+          <Text style={styles.startText}>Start Game</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   useEffect(() => {
     const loadGameData = () => {
@@ -129,6 +182,7 @@ const ScienceMatchingGame: React.FC<ScienceMatchingGameProps> = ({ route, naviga
                 onPress: async () => {
                   await AsyncStorage.setItem("points", points.toString());
                   onPointsUpdate(points);
+                  onGameComplete(section); // Mark the section as complete
                   navigation.goBack();
                 },
               },
@@ -143,32 +197,42 @@ const ScienceMatchingGame: React.FC<ScienceMatchingGameProps> = ({ route, naviga
     }
   };
 
+  const onStartGame = () => {
+    setShowInstructions(false);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>
-          Matching Game - {gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}
-        </Text>
-      </View>
-
-      <View style={styles.cardsContainer}>
-        {cards.map((card, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.card}
-            onPress={() => handleCardClick(index)}
-            disabled={matches[index]}
-          >
-            <Text style={styles.cardText}>
-              {flippedCards.includes(index) || matches[index] ? card.content : "?"}
+      {showInstructions ? (
+        <InstructionScreen gameMode={gameMode} onStartGame={onStartGame} />
+      ) : (
+        <>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>
+              Matching Game - {gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          </View>
 
-      <View style={styles.pointsContainer}>
-        <Text style={styles.pointsText}>Points: {points}</Text>
-      </View>
+          <View style={styles.cardsContainer}>
+            {cards.map((card, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.card}
+                onPress={() => handleCardClick(index)}
+                disabled={matches[index]}
+              >
+                <Text style={styles.cardText}>
+                  {flippedCards.includes(index) || matches[index] ? card.content : "?"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.pointsContainer}>
+            <Text style={styles.pointsText}>Points: {points}</Text>
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -225,6 +289,43 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 30,
   },
+  instructionScreen: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  instructionText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0288D1",
+    marginBottom: 10,
+  },
+  detailedInstructionsTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0288D1",
+    marginBottom: 10,
+  },
+  instructionsList: {
+    marginBottom: 20,
+  },
+  instructionItem: {
+    fontSize: 16,
+    color: "#0288D1",
+    marginBottom: 5,
+  },
+  startButton: {
+    backgroundColor: "#0288D1",
+    padding: 10,
+    borderRadius: 5,
+  },
+  startText: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  }
 });
 
 export default ScienceMatchingGame;

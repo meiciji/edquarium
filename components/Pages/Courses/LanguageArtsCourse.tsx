@@ -7,11 +7,17 @@ import { Ionicons } from "@expo/vector-icons";
 
 type RootStackParamList = {
   LanguageArtsCourse: undefined;
-  LanguageArtsGame: { gameMode: "Storytelling" | "Grammar" | "Spelling" | "Comprehension"; onPointsUpdate: (newPoints: number) => void };
+  LanguageArtsGame: { gameMode: "Storytelling" | "Grammar" | "Spelling" | "Comprehension"; onPointsUpdate: (newPoints: number) => void; onGameComplete: (section: string) => void };
 };
 
 const LanguageArtsCourse = () => {
   const [points, setPoints] = useState<number>(0);
+  const [completedSections, setCompletedSections] = useState<{ [key: string]: boolean }>({
+    Storytelling: false,
+    Grammar: false,
+    Spelling: false,
+    Comprehension: false,
+  });
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
@@ -21,13 +27,34 @@ const LanguageArtsCourse = () => {
         setPoints(Number(savedPoints));
       }
     };
+
+    const loadCompletedSections = async () => {
+      const savedSections = await AsyncStorage.getItem("completedSections");
+      if (savedSections !== null) {
+        setCompletedSections(JSON.parse(savedSections));
+      }
+    };
+
     loadPoints();
+    loadCompletedSections();
   }, []);
 
   const handlePointsUpdate = async (newPoints: number) => {
     const updatedPoints = points + newPoints;
     setPoints(updatedPoints);
     await AsyncStorage.setItem("points", updatedPoints.toString());
+  };
+
+  const handleGameComplete = async (section: string) => {
+    const updatedSections = { ...completedSections, [section]: true };
+    setCompletedSections(updatedSections);
+    await AsyncStorage.setItem("completedSections", JSON.stringify(updatedSections));
+  };
+
+  const calculateProgress = () => {
+    const relevantSections = ["Storytelling", "Grammar", "Spelling", "Comprehension"];
+    const completedCount = relevantSections.filter(section => completedSections[section]).length;
+    return (completedCount / relevantSections.length) * 100;
   };
 
   return (
@@ -48,9 +75,9 @@ const LanguageArtsCourse = () => {
       <View style={styles.progressContainer}>
         <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
         <View style={styles.customProgressBar}>
-          <View style={[styles.progressFill, { width: `${points}%` }]} />
+          <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
         </View>
-        <Text style={styles.progressText}>{points}% Complete</Text>
+        <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
       </View>
 
       {/* Sections */}
@@ -58,10 +85,20 @@ const LanguageArtsCourse = () => {
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("LanguageArtsGame", { gameMode: "Storytelling", onPointsUpdate: handlePointsUpdate })
+            navigation.navigate("LanguageArtsGame", { 
+              gameMode: "Storytelling", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "Storytelling"
+            })
           }
         >
-          <Ionicons name="create-outline" size={24} color="#BF360C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Storytelling ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#BF360C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>1. Storytelling Skills</Text>
             <Text style={styles.sectionDescription}>Learn to craft compelling stories</Text>
@@ -71,10 +108,20 @@ const LanguageArtsCourse = () => {
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("LanguageArtsGame", { gameMode: "Grammar", onPointsUpdate: handlePointsUpdate })
+            navigation.navigate("LanguageArtsGame", { 
+              gameMode: "Grammar", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "Grammar"
+            })
           }
         >
-          <Ionicons name="text-outline" size={24} color="#BF360C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Grammar ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#BF360C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>2. Grammar Genius</Text>
             <Text style={styles.sectionDescription}>Master grammar rules</Text>
@@ -84,10 +131,20 @@ const LanguageArtsCourse = () => {
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("LanguageArtsGame", { gameMode: "Spelling", onPointsUpdate: handlePointsUpdate })
+            navigation.navigate("LanguageArtsGame", { 
+              gameMode: "Spelling", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "Spelling"
+            })
           }
         >
-          <Ionicons name="leaf-outline" size={24} color="#BF360C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Spelling ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#BF360C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>3. Spelling Bee</Text>
             <Text style={styles.sectionDescription}>Explore spelling</Text>
@@ -97,10 +154,20 @@ const LanguageArtsCourse = () => {
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("LanguageArtsGame", { gameMode: "Comprehension", onPointsUpdate: handlePointsUpdate })
+            navigation.navigate("LanguageArtsGame", { 
+              gameMode: "Comprehension", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "Comprehension"
+            })
           }
         >
-          <Ionicons name="reader-outline" size={24} color="#BF360C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Comprehension ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#BF360C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>4. Reading Comprehension</Text>
             <Text style={styles.sectionDescription}>Sharpen your understanding</Text>
@@ -119,7 +186,7 @@ const LanguageArtsCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFE0B2",
+    backgroundColor: "#fff",
   },
   header: {
     backgroundColor: "#E64A19",
@@ -140,7 +207,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#FFE0B2",
+    backgroundColor: "#fff",
   },
   subText: {
     fontSize: 14,

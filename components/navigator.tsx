@@ -1,14 +1,14 @@
 import { createStackNavigator } from '@react-navigation/stack';
-import Dashboard from '../Pages/Home';
-import MathCourse from '../Pages/Courses/MathCourse';
-import ScienceCourse from '../Pages/Courses/ScienceCourse';
-import LanguageArtsCourse from '../Pages/Courses/LanguageArtsCourse';
-import HistoryCourse from '../Pages/Courses/HistoryCourse';
-import SnakeGame from '../../components/Minigames/SnakeGame';  // For math
-import ScienceMatchingGame from '../../components/Minigames/ScienceMatchingGame';  // For science
-import HistoryGame from '../../components/Minigames/ArtifactCollector';  // For history
-import LanguageArtsGame from '../../components/Minigames/LanguageArtsGame';  // For language arts
-import Chatbot from '../Pages/Chatbot';  // For language arts
+import Dashboard from './Pages/Home';
+import MathCourse from './Pages/Courses/MathCourse';
+import ScienceCourse from './Pages/Courses/ScienceCourse';
+import LanguageArtsCourse from './Pages/Courses/LanguageArtsCourse';
+import HistoryCourse from './Pages/Courses/HistoryCourse';
+import SnakeGame from './Minigames/SnakeGame';  // For math
+import ScienceMatchingGame from './Minigames/ScienceMatchingGame';  // For science
+import HistoryGame from './Minigames/ArtifactCollector';  // For history
+import LanguageArtsGame from './Minigames/LanguageArtsGame';  // For language arts
+import Chatbot from './Pages/Chatbot';  // For language arts
 import { useState } from 'react';
 
 const Stack = createStackNavigator();
@@ -65,7 +65,7 @@ function AppNavigator() {
       
       {/* Snake Game for Math */}
       <Stack.Screen
-        name="SnakeGame"
+        name="MathGame"
         component={SnakeGame}
         initialParams={{ section: 'Addition', onPointsUpdate: onMathPointsUpdate }}  // Pass the onPointsUpdate function for math
       />

@@ -7,19 +7,27 @@ import { Ionicons } from "@expo/vector-icons";
 
 // Define your navigation types
 type RootStackParamList = {
-  ScienceCourse: undefined;
-  ScienceMatchingGame: { 
-    gameMode: "biology" | "astronomy" | "physicalScience" | "chemistry"; 
+  MathCourse: undefined;
+  MathGame: { 
+    gameMode: "addition" | "subtraction" | "multiplication" | "division"; 
     onPointsUpdate: (newPoints: number) => void; 
+    onGameComplete: (section: string) => void;
+    section: string;
   };
 };
 
-// Component for ScienceCourse
-const ScienceCourse = () => {
+// Component for MathCourse
+const MathCourse = () => {
   const [points, setPoints] = useState<number>(0);
+  const [completedSections, setCompletedSections] = useState<{ [key: string]: boolean }>({
+    addition: false,
+    subtraction: false,
+    multiplication: false,
+    division: false,
+  });
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  // Load points from AsyncStorage when the component mounts
+  // Load points and completed sections from AsyncStorage when the component mounts
   useEffect(() => {
     const loadPoints = async () => {
       const savedPoints = await AsyncStorage.getItem("points");
@@ -27,7 +35,16 @@ const ScienceCourse = () => {
         setPoints(Number(savedPoints));
       }
     };
+
+    const loadCompletedSections = async () => {
+      const savedSections = await AsyncStorage.getItem("completedSections");
+      if (savedSections !== null) {
+        setCompletedSections(JSON.parse(savedSections));
+      }
+    };
+
     loadPoints();
+    loadCompletedSections();
   }, []);
 
   // Update points and save to AsyncStorage
@@ -37,13 +54,26 @@ const ScienceCourse = () => {
     await AsyncStorage.setItem("points", updatedPoints.toString());
   };
 
+  // Mark section as complete and save to AsyncStorage
+  const handleGameComplete = async (section: string) => {
+    const updatedSections = { ...completedSections, [section]: true };
+    setCompletedSections(updatedSections);
+    await AsyncStorage.setItem("completedSections", JSON.stringify(updatedSections));
+  };
+
+  const calculateProgress = () => {
+    const relevantSections = ["addition", "subtraction", "multiplication", "division"];
+    const completedCount = relevantSections.filter(section => completedSections[section]).length;
+    return (completedCount / relevantSections.length) * 100;
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="planet-outline" size={40} color="#FFFFFF" />
-        <Text style={styles.headerText}>Science Adventure</Text>
-        <Text style={styles.headerSubText}>Explore the wonders of science!</Text>
+        <Ionicons name="rocket-outline" size={40} color="#FFFFFF" />
+        <Text style={styles.headerText}>Math Adventure</Text>
+        <Text style={styles.headerSubText}>Swipe to guide your snake to victory!</Text>
       </View>
 
       {/* Points Display */}
@@ -55,9 +85,9 @@ const ScienceCourse = () => {
       <View style={styles.progressContainer}>
         <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
         <View style={styles.customProgressBar}>
-          <View style={[styles.progressFill, { width: `${points}%` }]} />
+          <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
         </View>
-        <Text style={styles.progressText}>{points}% Complete</Text>
+        <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
       </View>
 
       {/* Sections */}
@@ -65,64 +95,92 @@ const ScienceCourse = () => {
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("ScienceMatchingGame", { 
-              gameMode: "biology", 
-              onPointsUpdate: handlePointsUpdate 
+            navigation.navigate("MathGame", { 
+              gameMode: "addition", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "addition"
             })
           }
         >
-          <Ionicons name="leaf-outline" size={24} color="#388E3C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.addition ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#388E3C"
+            style={styles.icon}
+          />
           <View>
-            <Text style={styles.sectionTitle}>1. Biology Basics</Text>
-            <Text style={styles.sectionDescription}>Learn about living organisms</Text>
+            <Text style={styles.sectionTitle}>1. Addition</Text>
+            <Text style={styles.sectionDescription}>Learn about addition</Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("ScienceMatchingGame", { 
-              gameMode: "astronomy", 
-              onPointsUpdate: handlePointsUpdate 
+            navigation.navigate("MathGame", { 
+              gameMode: "subtraction", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "subtraction"
             })
           }
         >
-          <Ionicons name="planet-outline" size={24} color="#0288D1" style={styles.icon} />
+          <Ionicons
+            name={completedSections.subtraction ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#0288D1"
+            style={styles.icon}
+          />
           <View>
-            <Text style={styles.sectionTitle}>2. Astronomy Exploration</Text>
-            <Text style={styles.sectionDescription}>Explore the stars and planets</Text>
+            <Text style={styles.sectionTitle}>2. Subtraction</Text>
+            <Text style={styles.sectionDescription}>Learn about subtraction</Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("ScienceMatchingGame", { 
-              gameMode: "physicalScience", 
-              onPointsUpdate: handlePointsUpdate 
+            navigation.navigate("MathGame", { 
+              gameMode: "multiplication", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "multiplication"
             })
           }
         >
-          <Ionicons name="flame-outline" size={24} color="#F57C00" style={styles.icon} />
+          <Ionicons
+            name={completedSections.multiplication ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#F57C00"
+            style={styles.icon}
+          />
           <View>
-            <Text style={styles.sectionTitle}>3. Physical Science Fun</Text>
-            <Text style={styles.sectionDescription}>Discover matter and energy</Text>
+            <Text style={styles.sectionTitle}>3. Multiplication</Text>
+            <Text style={styles.sectionDescription}>Learn about multiplication</Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.section}
           onPress={() =>
-            navigation.navigate("ScienceMatchingGame", { 
-              gameMode: "chemistry", 
-              onPointsUpdate: handlePointsUpdate 
+            navigation.navigate("MathGame", { 
+              gameMode: "division", 
+              onPointsUpdate: handlePointsUpdate,
+              onGameComplete: handleGameComplete,
+              section: "division"
             })
           }
         >
-          <Ionicons name="flask-outline" size={24} color="#C2185B" style={styles.icon} />
+          <Ionicons
+            name={completedSections.division ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#C2185B"
+            style={styles.icon}
+          />
           <View>
-            <Text style={styles.sectionTitle}>4. Chemistry Challenge</Text>
-            <Text style={styles.sectionDescription}>Understand chemical reactions</Text>
+            <Text style={styles.sectionTitle}>4. Division</Text>
+            <Text style={styles.sectionDescription}>Learn about division</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -138,7 +196,7 @@ const ScienceCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#E3F2FD",
+    backgroundColor: "#fff",
   },
   header: {
     backgroundColor: "#0288D1",
@@ -159,7 +217,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#E1F5FE",
+    backgroundColor: "#fff",
   },
   subText: {
     fontSize: 14,
@@ -234,4 +292,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default ScienceCourse;
+export default MathCourse;

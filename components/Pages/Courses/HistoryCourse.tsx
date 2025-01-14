@@ -6,11 +6,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 type RootStackParamList = {
-  HistoryGame: { gameMode: "Ancient History" | "Medieval" | "Modern" | "World Wars"; onPointsUpdate: (newPoints: number) => void };
+  HistoryGame: { gameMode: "Ancient History" | "Medieval" | "Modern" | "World Wars"; onPointsUpdate: (newPoints: number) => void; onGameComplete: (section: string) => void };
 };
 
 const HistoryCourse = () => {
   const [totalPoints, setTotalPoints] = useState(0);
+  const [completedSections, setCompletedSections] = useState<{ [key: string]: boolean }>({
+    AncientHistory: false,
+    Medieval: false,
+    Modern: false,
+    WorldWars: false,
+  });
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   useEffect(() => {
@@ -24,26 +30,34 @@ const HistoryCourse = () => {
         console.error("Failed to load points", error);
       }
     };
+
+    const loadCompletedSections = async () => {
+      const savedSections = await AsyncStorage.getItem("completedSections");
+      if (savedSections !== null) {
+        setCompletedSections(JSON.parse(savedSections));
+      }
+    };
+
     loadPoints();
+    loadCompletedSections();
   }, []);
 
-  const handleSaveAndExit = async () => {
-    try {
-      // Save total points to AsyncStorage before exiting
-      await AsyncStorage.setItem("artifactPoints", totalPoints.toString());
-      Alert.alert("Your progress has been saved!");
-      navigation.goBack(); // Navigate back to the home screen or wherever you need
-    } catch (error) {
-      console.error("Failed to save data", error);
-    }
+  const handlePointsUpdate = async (newPoints: number) => {
+    const updatedPoints = totalPoints + newPoints;
+    setTotalPoints(updatedPoints);
+    await AsyncStorage.setItem("artifactPoints", updatedPoints.toString());
   };
 
-  const handlePointsUpdate = (newPoints: number) => {
-    setTotalPoints((prevPoints) => {
-      const updatedPoints = prevPoints + newPoints;
-      AsyncStorage.setItem("artifactPoints", updatedPoints.toString());
-      return updatedPoints;
-    });
+  const handleGameComplete = async (section: string) => {
+    const updatedSections = { ...completedSections, [section]: true };
+    setCompletedSections(updatedSections);
+    await AsyncStorage.setItem("completedSections", JSON.stringify(updatedSections));
+  };
+
+  const calculateProgress = () => {
+    const relevantSections = ["AncientHistory", "Medieval", "Modern", "WorldWars"];
+    const completedCount = relevantSections.filter(section => completedSections[section]).length;
+    return (completedCount / relevantSections.length) * 100;
   };
 
   return (
@@ -64,11 +78,9 @@ const HistoryCourse = () => {
       <View style={styles.progressContainer}>
         <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
         <View style={styles.customProgressBar}>
-          <View style={[styles.progressFill, { width: `${(totalPoints / 100)}%` }]} />
+          <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
         </View>
-        <Text style={styles.progressText}>
-          {Math.round((totalPoints / 100) * 100)}% Complete
-        </Text>
+        <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
       </View>
 
       {/* Sections */}
@@ -76,9 +88,19 @@ const HistoryCourse = () => {
         {/* Section 1 */}
         <TouchableOpacity
           style={styles.section}
-          onPress={() => navigation.navigate("HistoryGame", { gameMode: "Ancient History", onPointsUpdate: (newPoints: number) => setTotalPoints(totalPoints + newPoints) })}
+          onPress={() => navigation.navigate("HistoryGame", { 
+            gameMode: "Ancient History", 
+            onPointsUpdate: handlePointsUpdate,
+            onGameComplete: handleGameComplete,
+            section: "AncientHistory"
+          })}
         >
-          <Ionicons name="time-outline" size={24} color="#4A148C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.AncientHistory ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#4A148C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>1. Ancient Times Adventure</Text>
             <Text style={styles.sectionDescription}>Discover the pyramids and castles of the past!</Text>
@@ -88,9 +110,19 @@ const HistoryCourse = () => {
         {/* Section 2 */}
         <TouchableOpacity
           style={styles.section}
-          onPress={() => navigation.navigate("HistoryGame", { gameMode: "Medieval", onPointsUpdate: (newPoints: number) => setTotalPoints(totalPoints + newPoints) })}
+          onPress={() => navigation.navigate("HistoryGame", { 
+            gameMode: "Medieval", 
+            onPointsUpdate: handlePointsUpdate,
+            onGameComplete: handleGameComplete,
+            section: "Medieval"
+          })}
         >
-          <Ionicons name="compass-outline" size={24} color="#4A148C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Medieval ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#4A148C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>2. Medieval Quest</Text>
             <Text style={styles.sectionDescription}>Travel through castles and medieval lands!</Text>
@@ -100,9 +132,19 @@ const HistoryCourse = () => {
         {/* Section 3 */}
         <TouchableOpacity
           style={styles.section}
-          onPress={() => navigation.navigate("HistoryGame", { gameMode: "Modern", onPointsUpdate: (newPoints: number) => setTotalPoints(totalPoints + newPoints) })}
+          onPress={() => navigation.navigate("HistoryGame", { 
+            gameMode: "Modern", 
+            onPointsUpdate: handlePointsUpdate,
+            onGameComplete: handleGameComplete,
+            section: "Modern"
+          })}
         >
-          <Ionicons name="bulb-outline" size={24} color="#4A148C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.Modern ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#4A148C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>3. Modern Era Discoveries</Text>
             <Text style={styles.sectionDescription}>Learn about innovations that shaped our world!</Text>
@@ -112,9 +154,18 @@ const HistoryCourse = () => {
         {/* Section 4 */}
         <TouchableOpacity
           style={styles.section}
-          onPress={() => navigation.navigate("HistoryGame", { gameMode: "World Wars", onPointsUpdate: (newPoints: number) => setTotalPoints(totalPoints + newPoints) })}
+          onPress={() => navigation.navigate("HistoryGame", { 
+            gameMode: "World Wars", 
+            onPointsUpdate: handlePointsUpdate,
+            onGameComplete: handleGameComplete
+          })}
         >
-          <Ionicons name="shield-checkmark-outline" size={24} color="#4A148C" style={styles.icon} />
+          <Ionicons
+            name={completedSections.WorldWars ? "checkmark-circle-outline" : "ellipse-outline"}
+            size={24}
+            color="#4A148C"
+            style={styles.icon}
+          />
           <View>
             <Text style={styles.sectionTitle}>4. World Wars</Text>
             <Text style={styles.sectionDescription}>Explore the wars that changed history!</Text>
@@ -128,7 +179,7 @@ const HistoryCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFEBEE",
+    backgroundColor: "#fff",
   },
   header: {
     backgroundColor: "#D32F2F",
@@ -149,7 +200,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#FFCDD2",
+    backgroundColor: "#fff",
   },
   subText: {
     fontSize: 14,
