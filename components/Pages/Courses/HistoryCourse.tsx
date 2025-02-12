@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,7 +10,7 @@ type RootStackParamList = {
 };
 
 const HistoryCourse = () => {
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [points, setPoints] = useState<number>(0);
   const [completedSections, setCompletedSections] = useState<{ [key: string]: boolean }>({
     AncientHistory: false,
     Medieval: false,
@@ -21,13 +21,9 @@ const HistoryCourse = () => {
 
   useEffect(() => {
     const loadPoints = async () => {
-      try {
-        const savedPoints = await AsyncStorage.getItem("artifactPoints");
-        if (savedPoints) {
-          setTotalPoints(parseInt(savedPoints, 10));
-        }
-      } catch (error) {
-        console.error("Failed to load points", error);
+      const savedPoints = await AsyncStorage.getItem("points");
+      if (savedPoints !== null) {
+        setPoints(Number(savedPoints));
       }
     };
 
@@ -43,9 +39,9 @@ const HistoryCourse = () => {
   }, []);
 
   const handlePointsUpdate = async (newPoints: number) => {
-    const updatedPoints = totalPoints + newPoints;
-    setTotalPoints(updatedPoints);
-    await AsyncStorage.setItem("artifactPoints", updatedPoints.toString());
+    const updatedPoints = points + newPoints;
+    setPoints(updatedPoints);
+    await AsyncStorage.setItem("points", updatedPoints.toString());
   };
 
   const handleGameComplete = async (section: string) => {
@@ -63,26 +59,23 @@ const HistoryCourse = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Ionicons name="book-outline" size={40} color="#FFFFFF" />
-        <Text style={styles.headerText}>History Journey</Text>
-        <Text style={styles.headerSubText}>Explore the past to shape the future!</Text>
-      </View>
-
+          <View style={styles.header}>
+            <Image source={require('../../../assets/images/fishstory.png')} style={styles.headerImage} />
+          </View>
+            
       {/* Points Display */}
-      <View style={styles.pointsContainer}>
-        <Text style={styles.pointsText}>Total Points: {totalPoints}</Text>
-      </View>
-
-      {/* Progress Bar Section */}
-      <View style={styles.progressContainer}>
-        <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
+         <View style={styles.pointsContainer}>
+              <Text style={styles.title}>Fishy History</Text>
+               <Text style={styles.pointsText}>Points: {points}</Text>
+          </View>
+            
+        {/* Progress Bar Section */}
+          <View style={styles.progressContainer}>
         <View style={styles.customProgressBar}>
-          <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
-        </View>
-        <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
-      </View>
-
+            <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
+             </View>
+            <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
+            </View>
       {/* Sections */}
       <ScrollView contentContainerStyle={styles.content}>
         {/* Section 1 */}
@@ -92,7 +85,6 @@ const HistoryCourse = () => {
             gameMode: "Ancient History", 
             onPointsUpdate: handlePointsUpdate,
             onGameComplete: handleGameComplete,
-            section: "AncientHistory"
           })}
         >
           <Ionicons
@@ -114,7 +106,6 @@ const HistoryCourse = () => {
             gameMode: "Medieval", 
             onPointsUpdate: handlePointsUpdate,
             onGameComplete: handleGameComplete,
-            section: "Medieval"
           })}
         >
           <Ionicons
@@ -136,7 +127,6 @@ const HistoryCourse = () => {
             gameMode: "Modern", 
             onPointsUpdate: handlePointsUpdate,
             onGameComplete: handleGameComplete,
-            section: "Modern"
           })}
         >
           <Ionicons
@@ -179,19 +169,37 @@ const HistoryCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#eae3de",
   },
   header: {
-    backgroundColor: "#D32F2F",
-    padding: 20,
-    alignItems: "center",
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginVertical: 5,
-  },
+          margin: 15,
+          padding: 20,
+          height: 200,
+          width: 400,
+          alignItems: 'center',
+          justifyContent: 'center', // Center content vertically and horizontally
+          backgroundColor: 'white',
+          position: 'relative',
+          flexDirection: 'row',
+          borderRadius: 10,
+          shadowColor: '#BBDEFB', // Blue shadow color
+          shadowOffset: { width: 0, height: 2 }, // Shadow offset
+          shadowOpacity: 1, // Shadow opacity
+          shadowRadius: 4, // Shadow radius
+          overflow: 'hidden', // Ensures the image stays within the rounded corners
+        },
+        headerImage: {
+          ...StyleSheet.absoluteFillObject, // Fills the entire header
+          width: undefined, // Reset width for correct scaling
+          height: undefined, // Reset height for correct scaling
+          resizeMode: 'cover', // Ensures the image covers the space proportionally
+        },  
+    headerText: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: "#FFFFFF",
+      marginVertical: 5,
+    },
   headerSubText: {
     fontSize: 14,
     color: "#FFCDD2",
@@ -200,27 +208,27 @@ const styles = StyleSheet.create({
   progressContainer: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#cdbeb1",
   },
   subText: {
     fontSize: 14,
-    color: "#B71C1C",
+    color: "#816852",
     marginBottom: 10,
   },
   customProgressBar: {
     width: "90%",
     height: 10,
-    backgroundColor: "#FF8A80",
+    backgroundColor: "#eae3de",
     borderRadius: 5,
     overflow: "hidden",
   },
   progressFill: {
     height: "100%",
-    backgroundColor: "#D32F2F",
+    backgroundColor: "#816852",
   },
   progressText: {
     fontSize: 14,
-    color: "#B71C1C",
+    color: "#816852",
     marginTop: 5,
   },
   content: {
@@ -247,11 +255,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#D32F2F",
+    color: "#816852",
   },
   sectionDescription: {
     fontSize: 14,
-    color: "#B71C1C",
+    color: "#816852",
   },
   footerButton: {
     backgroundColor: "#D32F2F",
@@ -263,16 +271,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#816852',
+    marginLeft: 20,
+  },
   pointsContainer: {
     padding: 10,
-    backgroundColor: "#FFCDD2",
-    alignItems: "center",
+    backgroundColor: "#cdbeb1",
+    flexDirection: "row", // Ensures horizontal layout
+    justifyContent: "space-between", // Pushes content to the right
   },
   pointsText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#D32F2F",
-  },
+    fontSize: 14,
+    color: "#816852",
+    marginRight: 20,
+  }
 });
 
 export default HistoryCourse;

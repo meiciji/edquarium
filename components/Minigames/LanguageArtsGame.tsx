@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Alert } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Alert, Animated, Easing } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 
 interface RouteParams {
   gameMode: 'Storytelling' | 'Spelling' | 'Grammar' | 'Comprehension';
   onPointsUpdate: (points: number) => void;
   onGameComplete: (gameMode: string) => void;
+}
+interface SpellingQuestionProps {
+  question: { lesson: number; correctWord: string; image: any };
+  inputText: string;
+  setInputText: React.Dispatch<React.SetStateAction<string>>;
+  onComplete: (isCorrect: boolean) => void;
 }
 
 const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams }, navigation: any }) => {
@@ -29,6 +36,7 @@ const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams 
   };
 
   useEffect(() => {
+    
     const generatedQuestions = generateQuestions(gameMode);
     setQuestions(generatedQuestions);
     setAchievement(achievements[gameMode]); // Set the achievement based on the game mode
@@ -63,27 +71,39 @@ const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams 
 
   const addToDashboard = async () => {
     try {
+      // Retrieve the saved achievements from AsyncStorage
       const savedAchievements = await AsyncStorage.getItem("achievements");
+      
+      // If there are saved achievements, parse them. Otherwise, initialize an empty array.
       const achievementsList = savedAchievements ? JSON.parse(savedAchievements) : [];
   
+      // Check if the achievement is already in the list
       if (!achievementsList.includes(achievement)) {
+        // If the achievement is not already in the list, add it
         achievementsList.push(achievement);
+  
+        // Save the updated achievements list back to AsyncStorage
         await AsyncStorage.setItem("achievements", JSON.stringify(achievementsList));
+  
+        // Show a success alert informing the user that the achievement was added
         Alert.alert("Success", "Achievement added to dashboard!", [
-          { text: "OK" },
-          { text: "Save and Exit", onPress: () => navigation.goBack() }
+          { text: "OK" }, // OK button to dismiss the alert
+          { text: "Save and Exit", onPress: () => navigation.goBack() } 
         ]);
       } else {
+        // If the achievement is already in the list, inform the user
         Alert.alert("Info", "Achievement already added to dashboard.", [
           { text: "OK" },
-          { text: "Save and Exit", onPress: () => navigation.goBack() }
+          { text: "Save and Exit", onPress: () => navigation.goBack() } 
         ]);
       }
     } catch (error) {
+      // Log any error that occurs during the process
       console.error("Failed to save achievement", error);
     }
   };
-
+  
+  
   return (
     <View style={styles.container}>
       {showInstruction ? (
@@ -119,18 +139,65 @@ const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams 
 };
 
 const CongratsScreen = ({ score, achievement, onAddToDashboard, onGameComplete, gameMode }: any) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current; // Scale starts at 0
+
   useEffect(() => {
-    onGameComplete(gameMode); // Call onGameComplete when the CongratsScreen is rendered
+    onGameComplete(gameMode);
+
+    // Jump-in effect
+    Animated.spring(scaleAnim, {
+      toValue: 1.2, // Grows larger
+      friction: 3, // Smooth effect
+      useNativeDriver: true,
+    }).start(() => {
+      // Wobble effect after jump-in
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.9, // Shrinks slightly
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1.1, // Expands
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1, // Settles to normal size
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   }, [onGameComplete, gameMode]);
 
   return (
-    <View style={styles.congratsScreen}>
-      <Text style={styles.congratsTitle}>Congrats! You won!</Text>
-      <Text style={styles.pointsText}>Points earned this round: {score}</Text>
+    <View style={styles.container}>
+      {/* Animated View for Jump-In & Wobble */}
+      <Animated.View style={[styles.profileContainer, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={styles.badge}>
+          <Image source={require("../../assets/images/winning.png")} style={styles.crown} />
+          <Text style={styles.username}>You Won!</Text>
+        </View>
+      
+
+      {/* Score Display */}
+      <Text style={styles.winningScore}>{score}</Text>
+      <Text style={styles.scoreLabel}>Score</Text>
+
       <Text style={styles.achievementText}>Achievement unlocked: {achievement}</Text>
       <TouchableOpacity style={styles.addButton} onPress={onAddToDashboard}>
         <Text style={styles.addButtonText}>Add to Dashboard</Text>
       </TouchableOpacity>
+
+      {/* Share Button */}
+      <TouchableOpacity style={styles.shareButton}>
+        <Ionicons name="share-social-outline" size={24} color="#7a77ff" />
+      </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };
@@ -171,15 +238,19 @@ const InstructionScreen = ({ gameMode, onSkip }: any) => {
 
   return (
     <View style={styles.instructionScreen}>
+       <Image
+      source={require("../../assets/images/9.png")} // Replace with your actual image
+      style={styles.headerImage}
+    />
       <Text style={styles.instructionText}>{instructionText}</Text>
-      <Text style={styles.detailedInstructionsTitle}>Instructions:</Text>
-      <View style={styles.instructionsList}>
+      <Text style={styles.title}>Instructions:</Text>
+      <View>
         {detailedInstructions.map((instruction, index) => (
-          <Text key={index} style={styles.instructionItem}>• {instruction}</Text>
+          <Text key={index} style={styles.description}>• {instruction}</Text>
         ))}
       </View>
-      <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
-        <Text style={styles.skipText}>Start Game</Text>
+      <TouchableOpacity style={styles.button} onPress={onSkip}>
+        <Text style={styles.buttonText}>Start Game</Text>
       </TouchableOpacity>
     </View>
   );
@@ -231,28 +302,28 @@ const generateQuestions = (mode: string) => {
         return [
           {
             id: "1",
-            image: require("../../assets/images/cat.png"),
+            image: require("../../assets/images/catSpelling.png"),
             correctWord: "cat",
           },
           {
             id: "2",
-            image: require("../../assets/images/dog.png"),
+            image: require("../../assets/images/puppy.png"),
             correctWord: "dog",
           },
           {
             id: "3",
-            image: require("../../assets/images/apple.png"),
-            correctWord: "apple",
+            image: require("../../assets/images/panda.png"),
+            correctWord: "panda",
           },
           {
             id: "4",
-            image: require("../../assets/images/book.png"),
-            correctWord: "book",
+            image: require("../../assets/images/owl.png"),
+            correctWord: "owl",
           },
           {
             id: "5",
-            image: require("../../assets/images/chipotle.png"),
-            correctWord: "chipotle",
+            image: require("../../assets/images/koala.png"),
+            correctWord: "koala",
           },
         ];
   
@@ -338,33 +409,77 @@ const generateQuestions = (mode: string) => {
     }
   };  
 
-const SpellingQuestion = ({
-  question,
-  inputText,
-  setInputText,
-  onComplete,
-}: any) => {
-  const handleSubmit = () => {
-    const isCorrect = inputText.toLowerCase().trim() === question.correctWord.toLowerCase();
-    onComplete(isCorrect);
-  };
+  const SpellingQuestion: React.FC<SpellingQuestionProps> = ({ question, onComplete }) => {
+    const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
+    const [feedback, setFeedback] = useState<string | null>(null);
+  
+    const letters = [...question.correctWord.toUpperCase(), ...'XAFJLIO']; // Example extra letters, shuffle these later.
 
-  return (
-    <View style={styles.spellingContainer}>
-      <Image source={question.image} style={styles.image} />
-      <TextInput
-        style={styles.input}
-        value={inputText}
-        onChangeText={setInputText}
-        placeholder="Type the word here"
-        keyboardType="default"
-      />
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitText}>Submit</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+    const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
+
+    // Shuffle letters when the component mounts
+    useEffect(() => {
+      const allLetters = [...question.correctWord.toUpperCase(), ...'XAFJLIO']; // Add extra letters
+      setShuffledLetters(shuffleArray(allLetters)); // Shuffle the combined letters
+    }, [question]);
+
+    // Fisher-Yates shuffle algorithm
+    const shuffleArray = (array: string[]): string[] => {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    };
+  
+    const handleLetterPress = (letter: string) => {
+      if (selectedLetters.length < question.correctWord.length) {
+        setSelectedLetters([...selectedLetters, letter]);
+      }
+    };
+  
+    const handleSubmit = () => {
+      const isCorrect = selectedLetters.join('').toLowerCase() === question.correctWord.toLowerCase();
+      setFeedback(isCorrect ? 'Correct! 🎉' : 'Incorrect. Try again. ❌');
+      onComplete(isCorrect);
+      if (isCorrect) {
+        setTimeout(() => {
+          setFeedback(null);
+          setSelectedLetters([]);
+        }, 2000); // Clear feedback and reset after 2 seconds if correct
+      } else {
+        //clear
+        setSelectedLetters([]);
+      }
+    };
+  
+    return (
+      <View style={styles.container}>
+        <Text style={styles.questionText}>Which animal is this?</Text>
+        <Image source={question.image} style={styles.image} />
+        <View style={styles.wordContainer}>
+          {question.correctWord.split('').map((_, index) => (
+            <Text key={index} style={styles.letterBox}>
+              {selectedLetters[index] || '_'}
+            </Text>
+          ))}
+        </View>
+        <View style={styles.lettersContainer}>
+          {shuffledLetters.map((letter, index) => (
+            <TouchableOpacity key={index} style={styles.letterButton} onPress={() => handleLetterPress(letter)}>
+              <Text style={styles.letterText}>{letter}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Text style={styles.submitText}>Submit</Text>
+        </TouchableOpacity>
+        {feedback && <Text style={styles.feedbackText}>{feedback}</Text>}
+      </View>
+    );
+  };
+  
 
 const Question = ({ question, onAnswerSelected, selectedAnswer, onComplete }: any) => {
   const handleAnswerSelect = (answer: string) => {
@@ -402,6 +517,71 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8E1", // Orange theme background
     alignItems: "center",
   },
+  questionText: {
+    marginTop: 50,
+    fontSize: 20,
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginBottom: 20,
+  },
+  wordContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  letterBox: {
+    width: 40,
+    height: 40,
+    margin: 5,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 40,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 8,
+  },
+  lettersContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 20
+  },
+  letterButton: {
+    width: 40,
+    height: 40,
+    margin: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFCDD2',
+    borderRadius: 8,
+  },
+  letterText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  submitButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#F48FB1',
+    borderRadius: 8,
+  },
+  submitText: {
+    fontSize: 16,
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  feedbackText: {
+    marginTop: 20,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50', // Green for correct feedback
+  },
   instructionScreen: {
     flex: 1,
     justifyContent: "center",
@@ -425,14 +605,73 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   title: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#FF7043", // Orange title
+    color: "#333",
     marginBottom: 10,
+    textAlign: "center",
+  },
+  description: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    margin: 10,
+  },
+  button: {
+    backgroundColor: "#333",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginTop: 10,
+    marginBottom: 60,
+  },
+  headerImage: {
+    width: 300,
+    height: 300,
+    marginBottom: 0,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontSize: 16,
   },
   score: {
-    fontSize: 18,
+    fontSize: 24,
     color: "#FF7043",
+  },
+  profileContainer: {
+    marginTop: 50,
+    alignItems: "center",
+  },
+  badge: {
+    alignItems: "center",
+  },
+  crown: {
+    position: "absolute",
+    marginTop: 50,
+    width: 310,
+    height: 160,
+    marginBottom: 50,
+  },
+  username: {
+    marginTop: 200,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  winningScore: {
+    fontSize: 60,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 10,
+  },
+  scoreLabel: {
+    fontSize: 18,
+    color: "#555",
+  },
+  shareButton: {
+    marginTop: 20,
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: "#f0f0ff",
   },
   feedback: {
     fontSize: 16,
@@ -443,30 +682,6 @@ const styles = StyleSheet.create({
   spellingContainer: {
     alignItems: "center",
     justifyContent: "center",
-  },
-  image: {
-    marginTop: 40,
-    width: 200,
-    height: 200,
-    marginBottom: 40,
-  },
-  input: {
-    height: 40,
-    width: 200,
-    borderColor: "#FF7043",
-    borderWidth: 2,
-    borderRadius: 5,
-    paddingLeft: 10,
-    marginBottom: 20,
-  },
-  submitButton: {
-    backgroundColor: "#FF7043", // Orange button
-    padding: 10,
-    borderRadius: 5,
-  },
-  submitText: {
-    color: "#FFF",
-    fontWeight: "bold",
   },
   questionContainer: {
     marginVertical: 20,
@@ -506,18 +721,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FF7043",
   },
-  detailedInstructionsTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FF7043", // Orange title for instructions
-    textAlign: "center",
-    marginBottom: 15,
-  },
-  instructionsList: {
-    marginBottom: 30,
-    alignItems: "flex-start", // Aligning items to the left for bullet points
-    paddingHorizontal: 20, // Add some padding to the left for bullets
-  },
   instructionItem: {
     fontSize: 18,
     color: "#FF7043", // Orange text for instructions
@@ -546,19 +749,33 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   achievementText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
     marginBottom: 20,
+    marginTop: 20,
   },
   addButton: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
+    backgroundColor: '#f28d9f',
+    paddingVertical: 16,
+    paddingHorizontal: 35,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    borderWidth: 2,
+    borderColor: '#fff',
+    width: 210,
+    height: 50, // Increased height for better vertical centering
+    justifyContent: 'center', // Centers content vertically
+    alignItems: 'center', // Centers content horizontally
   },
+  
   addButtonText: {
     color: '#fff',
-    fontSize: 16,
-  },
+    fontSize: 14,
+    fontWeight: 'bold', // Makes the text stand out
+    textAlign: 'center', // Ensures text is centered
+  },  
 });
 
 export default LanguageArtsGame;

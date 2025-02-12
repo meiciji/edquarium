@@ -240,21 +240,25 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
   };
 
   const InstructionScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => {
-    return (
-      <View style={styles.instructionScreen}>
-        <Text style={styles.instructionText}>Welcome to Artifact Collector!</Text>
-        <Text style={styles.detailedInstructionsTitle}>How to Play:</Text>
-        <View style={styles.instructionsList}>
-          <Text style={styles.instructionItem}>• Answer questions correctly to collect artifacts.</Text>
-          <Text style={styles.instructionItem}>• Each correct answer earns you points.</Text>
-          <Text style={styles.instructionItem}>• Collect all artifacts to win the game.</Text>
-        </View>
-        <TouchableOpacity style={styles.startButton} onPress={onStartGame}>
-          <Text style={styles.startText}>Start Game</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+        return (
+            <View style={styles.slide}>
+              <Image
+                source={require("../../assets/images/nemo.png")} // Replace with your actual image
+                style={styles.image}
+              />
+              <Text style={styles.instructionsTitle}>Instructions</Text>
+              <Text style={styles.description}>
+              • Answer questions and earn points to collect achievements.
+              </Text>
+              <Text style={styles.description}>
+              • Each correct answer leads to a story about ancient history!
+              </Text>
+              <TouchableOpacity style={styles.instructionsButton} onPress={onStartGame}>
+                <Text style={styles.instructionsButtonText}>Start Game</Text>
+              </TouchableOpacity>
+            </View>
+        );
+      };
 
   return (
     <View style={styles.container}>
@@ -262,7 +266,7 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
         <InstructionScreen onStartGame={onStartGame} />
       ) : (
         <>
-          <Text style={styles.title}>{gameMode} Artifact Collector</Text>
+          <Text style={styles.title}>{gameMode} Quiz</Text>
           {loading ? (
             <Text>Loading...</Text>
           ) : (
@@ -304,6 +308,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
+  },
+  slide: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff", // Background color for the slide
+    padding: 20,
+    marginTop: 45,
+  },
+  image: {
+    width: 400,
+    height: 200,
+    marginBottom: 20,
+  },
+  instructionsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  description: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    margin: 10,
+  },
+  instructionsButton: {
+    backgroundColor: "#333",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginBottom: 40
+  },
+  instructionsButtonText: {
+    color: "#FFF",
+    fontSize: 16,
   },
   title: {
     fontSize: 24,

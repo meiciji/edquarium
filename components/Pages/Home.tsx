@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Linking } from 'react-native';
-import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; // Importing vector icons from Expo
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Linking, ImageBackground, Alert } from 'react-native';
+import { useNavigation, NavigationProp, useFocusEffect, DrawerActions } from '@react-navigation/native';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // For saving and retrieving data locally
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Type definition for completed sections in different subjects
 type CompletedSections = {
@@ -31,6 +32,7 @@ type RootStackParamList = {
 
 export default function Dashboard() {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>(); // Hook to get the navigation object
+  const [userName, setUserName] = useState('');
 
   // State hooks to store data like achievements, points, and completed sections
   const [achievementsList, setAchievementsList] = useState<string[]>([]); // List of achievements
@@ -75,6 +77,18 @@ export default function Dashboard() {
     loadCompletedSections();
     loadPoints();
     loadAchievements();
+    const fetchUserName = async () => {
+      try {
+        const name = await AsyncStorage.getItem('userName');
+        if (name !== null) {
+          setUserName(name);
+        }
+      } catch (error) {
+        console.error('Failed to load user name.', error);
+      }
+    };
+
+    fetchUserName();
   }, []);
 
   // useFocusEffect to reload data when the screen comes into focus
@@ -85,42 +99,42 @@ export default function Dashboard() {
       loadAchievements();
     }, [])
   );
+  
 
-  // Function to calculate math progress based on completed sections
   const calculateMathProgress = () => {
-    const relevantSections = ["addition", "subtraction", "multiplication", "division"];
+    const relevantSections: (keyof CompletedSections)[] = ["addition", "subtraction", "multiplication", "division"];
     const completedCount = relevantSections.filter(section => completedSections[section]).length;
     return (completedCount / relevantSections.length) * 100; // Return percentage of completion
   };
-
-  // Function to calculate science progress based on completed sections
+  
   const calculateScienceProgress = () => {
-    const relevantSections = ["biology", "astronomy", "physicalScience", "chemistry"];
+    const relevantSections: (keyof CompletedSections)[] = ["biology", "astronomy", "physicalScience", "chemistry"];
     const completedCount = relevantSections.filter(section => completedSections[section]).length;
     return (completedCount / relevantSections.length) * 100; // Return percentage of completion
-  };
+  };  
 
   // Function to calculate language arts progress based on completed sections
   const calculateLanguageArtsProgress = () => {
-    const relevantSections = ["Storytelling", "Grammar", "Spelling", "Comprehension"];
+    const relevantSections: (keyof CompletedSections)[] = ["Storytelling", "Grammar", "Spelling", "Comprehension"];
     const completedCount = relevantSections.filter(section => completedSections[section]).length;
     return (completedCount / relevantSections.length) * 100; // Return percentage of completion
   };
 
   // Data for displaying courses with progress information
   const data = [
-    { id: '1', title: 'Mathematics', progress: calculateMathProgress() / 100, icon: '📘', courseLink: 'Math' },
-    { id: '2', title: 'Science', progress: calculateScienceProgress() / 100, icon: '📗', courseLink: 'Science' },
-    { id: '3', title: 'Language Arts', progress: calculateLanguageArtsProgress() / 100, icon: '📙', courseLink: 'LanguageArts' },
-    { id: '4', title: 'History', progress: 0.50, icon: '📕', courseLink: 'History' },
+    { id: '1', title: 'Mathematics', progress: calculateMathProgress() / 100, source: require('../../assets/images/numbers.png'), courseLink: 'Math' },
+    { id: '2', title: 'Science', progress: calculateScienceProgress() / 100, source: require('../../assets/images/biology.png'), courseLink: 'Science' },
+    { id: '3', title: 'Reading', progress: calculateLanguageArtsProgress() / 100, source: require('../../assets/images/reading1.png'), courseLink: 'LanguageArts' },
+    { id: '4', title: 'History', progress: 0, source: require('../../assets/images/globe1.png'), courseLink: 'History' },
   ];
 
   // Function to handle sharing achievements on social media
   const handleShare = async (platform: string) => {
-    const message = 'I just earned 100 points on Edquest, the ultimate educational app! 🎉 Join me on this learning adventure!';
+    //A default message is set to advertise our app and the user's achievement.
+    const message = 'I just earned 100 points on EdQuest, the ultimate educational app! 🎉 Join me on this learning adventure!';
     let url = '';
 
-    // Set the URL depending on the selected platform
+    // Set the URL depending on the selected platform to load the default messgae into the social media platofrm
     if (platform === 'facebook') {
       url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(message)}`;
     } else if (platform === 'twitter') {
@@ -142,7 +156,7 @@ export default function Dashboard() {
   };
 
   // Function to handle course navigation
-  const handleCourseClick = (courseLink: string) => {
+  const handleCourseClick = (courseLink: any) => {
     navigation.navigate(courseLink); // Navigate to the appropriate course screen
   };
 
@@ -164,241 +178,419 @@ export default function Dashboard() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <Text style={styles.title}>Dashboard</Text>
+    <View style={{flex:1}}>
+    <ImageBackground
+      source={require('../../assets/images/underwater.png')}
+      style={[styles.background]} // Ensure it takes up the full screen
+    >
+    <LinearGradient
+  colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.2)']} // Lighter white with less opacity
+    style={styles.gradientOverlay}
+  />
+  <ScrollView style={styles.container}>
+  <View style={styles.container}>
+      {/* Banner Section */}
+      <View style={styles.bannerContainer}>
+      <View style={styles.textContainer}>
+        <Text style={styles.bannerText}>Hello, {userName}!</Text>
+        <Text style={styles.summarySubtitle}>Let's dive into learning!</Text>
+      </View>
+      <TouchableOpacity onPress={() => navigation.navigate('Chatbot')}>
+      <Image
+        source={require('../../assets/images/1.png')} // Adjust the path to your mascot image
+        style={styles.mascotImage}
+      />
+      </TouchableOpacity>
+    </View>
 
-      {/* Summary Cards */}
-      <View style={styles.summaryContainer}>
+      {/* Featured Categories Section */}
+      <Text style={styles.featuredTitle}>Featured Lessons</Text>
+      <View style={styles.categoriesContainer}>
+        {data.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.categoryItem}
+            onPress={() => handleCourseClick(item.courseLink)} // Navigate to the course home page
+          >
+            <Image
+              source={item.source} // Dynamically set icon source from data
+              style={styles.categoryIcon}
+            />
+            <Text style={styles.categoryText}>{item.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Recent Results Section */}
+      <View style={styles.recentResultsContainer}>
+        <Text style={styles.recentResultsTitle}>Recent Progress</Text>
+        <Text style={styles.seeAllText}>See all</Text>
+        {data.map((item) => (
+          <View style={[styles.resultCard, styles.shadowEffect]} key={item.id}>
+            <View style={styles.resultDetails}>
+              <Text style={styles.resultTitle}>{item.title}</Text>
+              <View style={styles.resultProgress}>
+                {/* Custom Progress Bar */}
+                <View
+                  style={[
+                    styles.progressBar,
+                    { width: `${item.progress * 100}%` },
+                  ]}
+                />
+              </View>
+            </View>
+            <Text style={styles.progressText}>
+                {Math.round(item.progress * 100)}% Complete
+              </Text>
+          </View>
+        ))}
+      </View>
+
+       {/* Summary Cards */}
+       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Total Points</Text>
           <Text style={styles.summaryValue}>{totalPoints}</Text>
-          <Text style={styles.summarySubtitle}>+20 points from last session</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Share on Social Media</Text>
           <View style={styles.socialIconsContainer}>
             <TouchableOpacity onPress={() => handleShare('facebook')}>
-              <MaterialCommunityIcons name="facebook" size={32} color="#4267B2" style={styles.socialIcon} />
+              <MaterialCommunityIcons name="facebook" size={32} color="#4267B2" style={styles.facebookIcon} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => handleShare('twitter')}>
-              <MaterialCommunityIcons name="twitter" size={32} color="#1DA1F2" style={styles.socialIcon} />
+              
+              <Image source={require('../../assets/images/xsocial.png')} style={styles.socialIcon} />
             </TouchableOpacity>
           </View>
         </View>
       </View>
-
-      {/* Progress Cards */}
-      <View style={styles.progressContainer}>
-        {data.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.progressCard}
-            onPress={() => handleCourseClick(item.courseLink)}
-          >
-            <Text style={styles.cardTitle}>
-              {item.icon} {item.title}
-            </Text>
-            {/* Custom Progress Bar */}
-            <View style={styles.progressBarContainer}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${item.progress * 100}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.progressText}>
-              {Math.round(item.progress * 100)}% Complete
-            </Text>
-          </TouchableOpacity>
+       {/* Your Achievements Gallery */}
+    <View style={styles.achievementsContainer}>
+      <Text style={styles.achievementsTitle}>Your Achievements</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {achievementsList.map((achievement, index) => (
+          <View key={index} style={styles.achievementCard}>
+            <Image source={require('../../assets/images/starfish.png')} style={styles.achievementImage} />
+            <Text style={styles.achievementText}>{achievement}</Text>
+          </View>
         ))}
-      </View>
+      </ScrollView>
+    </View>
 
-      {/* Your Achievements Gallery */}
-      <View style={styles.achievementsContainer}>
-        <Text style={styles.achievementsTitle}>Your Achievements</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {achievementsList.map((achievement, index) => (
-            <View key={index} style={styles.achievementCard}>
-              <Text style={styles.achievementText}>{achievement}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Need Help Section */}
-      <View style={styles.helpContainer}>
-        <Text style={styles.helpText}>Need help with a subject?</Text>
-        <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => navigation.navigate('Chatbot')} // Assuming you have a Chatbot screen
-        >
-          <Image 
-            source={require('../../assets/images/octo.png')} // Add an image for the button
-            style={styles.helpButtonImage}
-          />
-          <Text style={styles.helpButtonText}>Chat with Dr. Octo</Text>
-        </TouchableOpacity>
-      </View>
+    </View>
+    </ScrollView>
+    </ImageBackground>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    padding: 16,
-    paddingBottom: 120, // Adjusted to give space for the navbar
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#111827',
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    flex: 1,
-    marginHorizontal: 8,
-    borderRadius: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  summaryValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginVertical: 8,
-  },
-  summarySubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  progressCard: {
-    backgroundColor: '#FFFFFF',
-    flexBasis: '48%',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  progressBarContainer: {
-    width: '100%',
-    height: 10,
-    backgroundColor: '#c1d7d0',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-  },
-  progressText: {
-    fontSize: 14,
-    color: 'black',
-  },
-  achievementsContainer: {
-    marginTop: 20,
-    marginBottom: 40, // Space before the navbar
-  },
-  achievementsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 10,
-  },
-  socialIconsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 16,
-  },
-  socialIcon: {
-    marginHorizontal: 10,
-  },
-  achievementCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 8,
-    borderRadius: 8,
-    height: 100,
-    width: 200,
-    padding: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  achievementText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
-  },
-  helpContainer: {
-    marginTop: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-  },
-  helpText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  helpButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderColor: '#10B981',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  helpButtonImage: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-  },
-  helpButtonText: {
-    fontSize: 16,
-    color: 'black',
-    fontWeight: 'bold',
-  },
-});
+  
+  const styles = StyleSheet.create({
+    background: {
+      flex: 1, // Ensures the background covers the full screen
+    },
+    gradientOverlay: {
+      ...StyleSheet.absoluteFillObject, // Ensures the gradient covers the entire screen
+    },
+    container: {
+      flex: 1,
+      padding: 6,
+      paddingBottom: 120,
+    },
+    recentResultsContainer: {
+      margin: 12,
+    },
+    recentResultsTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333333',
+    },
+    seeAllText: {
+      fontSize: 14,
+      color: 'black',
+      alignSelf: 'flex-end',
+      marginBottom: 8,
+    },
+    resultCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F5F5F5',
+      borderRadius: 10,
+      padding: 10,
+      marginBottom: 20,
+      position: 'relative', // Ensure the card is positioned relative to its shadow layers
+      },
+      shadowEffect: {
+            shadowColor: '#057785', // Red shadow
+            shadowOffset: { width: 7, height: 7 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+            elevation: 5, // For Android shadow
+            zIndex: 1, // Ensure the shadow is below the card
+      },
+      shadowEffect2: {
+            shadowColor: '#F8C57C', // Green shadow
+            shadowOffset: { width: -5, height: -5 },
+            shadowOpacity: 1,
+            shadowRadius: 0,
+            elevation: 5, // For Android shadow
+            zIndex: 0, // Ensure the shadow is below the card
+      },
+    resultIndex: {
+      backgroundColor: '#9C27B0',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+    },
+    resultIndexText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+    resultDetails: {
+      flex: 1,
+    },
+    textContainer: {
+      flexDirection: 'column', // Stack text elements vertically
+      alignItems: 'flex-start', // Align text to the left
+    },
+    resultTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#333333',
+    },
+    resultProgress: {
+      backgroundColor: '#E0E0E0',
+      height: 6,
+      borderRadius: 3,
+      marginTop: 4,
+    },
+    progressBar: {
+      backgroundColor: '#6bbec6',
+      height: 6,
+      borderRadius: 3,
+    },
+    resultScore: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#555555',
+    },
+    bannerContainer: {
+      margin: 5,
+      padding: 20,
+      alignItems: 'center',
+      backgroundColor: 'white',
+      position: 'relative',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      borderRadius: 10,
+      shadowColor: '#6bbec6', // Blue shadow color
+      shadowOffset: { width: 0, height: 2 }, // Shadow offset
+      shadowOpacity: 1, // Shadow opacity
+      shadowRadius: 4, // Shadow radius
+    },
+    bannerText: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: 'black',
+    },
+    playButton: {
+      marginTop: 10,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+    },
+    playButtonText: {
+      fontSize: 16,
+      color: '#9C27B0',
+      fontWeight: 'bold',
+    },
+    featuredTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333333',
+      marginLeft: 16,
+      marginTop: 10,
+    },
+    categoriesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-around',
+      marginTop: 10,
+    },
+    categoryItem: {
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    categoryIcon: {
+      width: 70,
+      height: 70,
+      borderRadius: 30,
+      backgroundColor: '#E0E0E0',
+    },
+    categoryText: {
+      marginTop: 8,
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#555555',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    mascotImage: {
+      width: 120,
+      height: 120,
+      marginRight: 15,
+      alignSelf: 'center',
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+      textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 5,
+    },
+    summaryContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      marginLeft: 3,
+      marginRight: 3,
+    },
+    socialIconsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginVertical: 16,
+    },
+    facebookIcon: {
+      marginHorizontal: 10,
+      marginLeft: 16,
+      width: 40,
+      height: 40,
+    },
+    socialIcon: {
+      marginHorizontal: 10,
+      width: 30,
+      height: 30,
+      marginTop: 2,
+    },
+    summaryCard: {
+      backgroundColor: '#FFFFFF',
+      flex: 1,
+      height: 120,
+      marginHorizontal: 8,
+      borderRadius: 12,
+      padding: 14,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    cardIcon: {
+      marginBottom: 8,
+    },
+    summaryTitle: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#6B7280',
+    },
+    summaryValue: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#111827',
+      marginVertical: 8,
+    },
+    summarySubtitle: {
+      fontSize: 14,
+      color: '#6B7280',
+    },
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#111827',
+      marginBottom: 8,
+    },
+    progressText: {
+      fontSize: 14,
+      color: '#111827',
+    },
+    achievementsContainer: {
+      marginTop: 5,
+      marginBottom: 20,
+    },
+    achievementsTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: 'black',
+      marginBottom: 10,
+    },
+    achievementImage: {
+      width: 30,
+      height: 30,
+      borderRadius: 25,
+      marginBottom: 10,
+    },
+    achievementCard: {
+      backgroundColor: '#FFFFFF',
+      marginHorizontal: 8,
+      borderRadius: 12,
+      height: 120,
+      width: 200,
+      padding: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    achievementText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#111827',
+      textAlign: 'center',
+    },
+    helpContainer: {
+      marginTop: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 20,
+      backgroundColor: '#f28d9f',
+      borderRadius: 12,
+      shadowColor: 'black', // Blue shadow color
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset
+    shadowOpacity: 0.5, // Shadow opacity
+    shadowRadius: 4, // Shadow radius
+    },
+    helpText: {
+      fontSize: 18,
+      fontWeight: '500',
+      color: '#FFFFFF',
+      marginBottom: 10,
+    },
+    helpButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#FFFFFF',
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+    },
+    helpButtonImage: {
+      width: 32,
+      height: 32,
+      marginRight: 8,
+    },
+    helpButtonText: {
+      fontSize: 16,
+      color: '#111827',
+      fontWeight: 'bold',
+    },
+  }); 

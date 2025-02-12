@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Alert, PanResponder, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Alert, PanResponder, TouchableOpacity, Image } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type SnakeGameRouteParams = {
   onPointsUpdate: (points: number, section: string) => void;
@@ -34,6 +35,47 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ route, navigation }) => {
   const [answer, setAnswer] = useState(0);
   const [correctApple, setCorrectApple] = useState({ x: 0, y: 0 });
   const [showInstructions, setShowInstructions] = useState(true); // State to control instruction screen visibility
+  const [achievement, setAchievement] = useState(""); // State for achievement
+  const achievements = {
+    Storytelling: "Master of Storytelling",
+    Spelling: "Master of Spelling",
+    Grammar: "Master of Grammar",
+    Comprehension: "Master of Comprehension",
+  };
+
+  const addToDashboard = async () => {
+    try {
+      // Retrieve the saved achievements from AsyncStorage
+      const savedAchievements = await AsyncStorage.getItem("achievements");
+      
+      // If there are saved achievements, parse them. Otherwise, initialize an empty array.
+      const achievementsList = savedAchievements ? JSON.parse(savedAchievements) : [];
+  
+      // Check if the achievement is already in the list
+      if (!achievementsList.includes(achievement)) {
+        // If the achievement is not already in the list, add it
+        achievementsList.push(achievement);
+  
+        // Save the updated achievements list back to AsyncStorage
+        await AsyncStorage.setItem("achievements", JSON.stringify(achievementsList));
+  
+        // Show a success alert informing the user that the achievement was added
+        Alert.alert("Success", "Achievement added to dashboard!", [
+          { text: "OK" }, // OK button to dismiss the alert
+          { text: "Save and Exit", onPress: () => navigation.goBack() } 
+        ]);
+      } else {
+        // If the achievement is already in the list, inform the user
+        Alert.alert("Info", "Achievement already added to dashboard.", [
+          { text: "OK" },
+          { text: "Save and Exit", onPress: () => navigation.goBack() } 
+        ]);
+      }
+    } catch (error) {
+      // Log any error that occurs during the process
+      console.error("Failed to save achievement", error);
+    }
+  };
 
   // Function to generate a random question based on the game mode
   const generateQuestion = () => {
@@ -151,9 +193,9 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ route, navigation }) => {
         ) {
           setIsGameOver(true);
           clearInterval(intervalId);
-          Alert.alert("Game Over", `Your final score is ${score}`, [
+          Alert.alert("Game over.", `Your final score is ${score}.`, [
             { text: "Restart", onPress: restartGame },
-            { text: "Save & Exit", onPress: saveAndExit },
+            { text: "Save and Exit", onPress: saveAndExit },
           ]);
         }
       }, 300);
@@ -194,18 +236,22 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ route, navigation }) => {
 
   const InstructionScreen: React.FC<{ onStartGame: () => void }> = ({ onStartGame }) => {
     return (
-      <View style={styles.instructionScreen}>
-        <Text style={styles.instructionText}>Welcome to Snake Math Game!</Text>
-        <Text style={styles.detailedInstructionsTitle}>How to Play:</Text>
-        <View style={styles.instructionsList}>
-          <Text style={styles.instructionItem}>• Swipe to guide your snake to the correct apple.</Text>
-          <Text style={styles.instructionItem}>• Solve math problems to find the correct apple.</Text>
-          <Text style={styles.instructionItem}>• Avoid wrong apples and walls until the timer runs out.</Text>
+        <View style={styles.slide}>
+          <Image
+            source={require("../../assets/images/jelly.png")} // Replace with your actual image
+            style={styles.image}
+          />
+          <Text style={styles.title}>Instructions</Text>
+          <Text style={styles.description}>
+          • Swipe to guide your snake to the correct apple and solve math problems.
+          </Text>
+          <Text style={styles.description}>
+          • Avoid wrong apples and walls until the timer runs out.
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={onStartGame}>
+            <Text style={styles.buttonText}>Start Game</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.startButton} onPress={onStartGame}>
-          <Text style={styles.startText}>Start Game</Text>
-        </TouchableOpacity>
-      </View>
     );
   };
 
@@ -222,6 +268,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ route, navigation }) => {
             {apples.map((apple, index) => (
               <View key={index} style={[styles.apple, { left: apple.x * 30, top: apple.y * 30 }]}>
                 <Text style={styles.appleText}>{apple.number}</Text>
+                <View style={[styles.appleStem, { left: 12 }]} />
               </View>
             ))}
             {snake.map((segment, index) => (
@@ -234,7 +281,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ route, navigation }) => {
         </>
       )}
     </View>
-  );
+  );  
 };
 
 const styles = StyleSheet.create({
@@ -242,7 +289,41 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f8ff",
+    backgroundColor: "#DFF7F9",
+  },
+  slide: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#DFF7F9", // Background color for the slide
+    padding: 20,
+  },
+  image: {
+    width: 300,
+    height: 300,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  description: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    margin: 10,
+  },
+  button: {
+    backgroundColor: "#333",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: "#FFF",
+    fontSize: 16,
   },
   timer: {
     fontSize: 20,
@@ -258,28 +339,51 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   gameArea: {
-    width: 300,
-    height: 300,
+    width: 350,
+    height: 350,
     position: "relative",
     backgroundColor: "#dcdcdc",
     marginBottom: 20,
     borderWidth: 2,
     borderColor: "black",
+    borderRadius: 50,
   },
   snake: {
     position: "absolute",
-    width: 30,
-    height: 30,
-    backgroundColor: "green",
-  },
+    width: 40, // Keeping a reasonable width for a cute snake
+    height: 40, // Making it slightly more circular to soften the shape
+    backgroundColor: "#32CD32", // A lighter, friendlier green
+    borderRadius: 20, // Fully rounded to make it look like a soft, rounded cylinder
+    borderWidth: 2, // A slight border for a more defined look
+    borderColor: "#228B22", // A darker green for the border, complementing the snake color
+    shadowColor: "#228B22", // Soft shadow to give a bit of depth
+    shadowOffset: { width: 0, height: 3 }, // Slight shadow below to lift it
+    shadowOpacity: 0.2, // Low opacity for the shadow
+    shadowRadius: 3, // Slight shadow blur for a soft look
+  },  
   apple: {
     position: "absolute",
-    width: 30,
-    height: 30,
-    backgroundColor: "red",
+    width: 40, // Slightly bigger to make the apple more prominent
+    height: 35, // Make it a little more vertically elongated to resemble an apple's shape
+    backgroundColor: "#FF6347", // A richer, reddish color for the apple
+    borderRadius: 25, // Round the corners for a more organic look
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 15,
+    shadowColor: "#8B0000", // Dark shadow for depth
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    transform: [{ scaleX: 1.1 }, { scaleY: 1.2 }], // Slightly stretched to make the apple more organic
+  },
+  appleStem: {
+    position: "absolute",
+    top: -8, // Placing the stem above the apple
+    left: "90%",
+    transform: [{ translateX: 3 }], // Center the stem horizontally
+    width: 8,
+    height: 11,
+    backgroundColor: "green", // Brown color for the stem
+    borderRadius: 2, // Slightly rounded edges for the stem
   },
   appleText: {
     color: "white",

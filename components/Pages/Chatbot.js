@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import axios from 'axios';  // Import axios for API requests
+import axios from 'axios';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -13,7 +13,6 @@ const Chatbot = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!userMessage) return;
 
     // Add the user message to the chat
     const newMessages = [
@@ -27,33 +26,31 @@ const Chatbot = () => {
     try {
       // Make an API call to OpenAI's GPT-3 (or GPT-4) model
       const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions', // OpenAI API endpoint
+        'https://api.openai.com/v1/chat/completions', 
         {
-          model: 'gpt-4o-mini', // Use the appropriate GPT-4 or GPT-3 model here
+          model: 'gpt-4o-mini', 
           messages: [
-            { role: 'user', content: userMessage }, // Passing the user message to the API
+            { role: 'user', content: userMessage },
           ],
           max_tokens: 300,
           temperature: 0.7,
         },
         {
           headers: {
-            'Authorization': `Bearer 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`, // Replace with your OpenAI API key
+            'Authorization': `Bearer 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`, 
           },
         }
       );
 
       const aiResponse = {
         sender: 'ai',
-        text: response.data.choices[0].message.content.trim(), // Correct way to access AI response
+        text: response.data.choices[0].message.content.trim(),
       };
 
       setMessages((prevMessages) => [...prevMessages, aiResponse]);
       setIsTyping(false);
     } catch (error) {
       console.error("Error fetching AI response: ", error);
-      console.error("Error details: ", error.response ? error.response.data : error.message);
-      console.log("Error response data:", error.response ? error.response.data : "No response data");
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: 'ai', text: "Sorry, something went wrong." },
@@ -67,10 +64,8 @@ const Chatbot = () => {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Heading */}
       <Text style={styles.header}>Have a question? Chat with AI!</Text>
 
-      {/* Messages Area */}
       <ScrollView style={styles.messagesContainer}>
         {messages.map((message, index) => (
           <View
@@ -83,7 +78,6 @@ const Chatbot = () => {
         ))}
       </ScrollView>
 
-      {/* Input and Send button */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -93,17 +87,16 @@ const Chatbot = () => {
           multiline
         />
 
-        {/* Send Icon as TouchableOpacity */}
         <TouchableOpacity onPress={handleSendMessage} style={styles.sendButton}>
           <Icon name="send" size={30} color="#007BFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Typing indicator */}
       {isTyping && <Text style={styles.typingText}>AI is typing...</Text>}
     </KeyboardAvoidingView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

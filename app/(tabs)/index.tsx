@@ -3,20 +3,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // For per
 import { View, StyleSheet } from 'react-native';
 import LandingPage from '../../components/Pages/Login'; // Landing page 
 import AppNavigator from '../../components/navigator'; // Navigation system for the main app
+import OnboardingPage from '../../components/Pages/Onboarding'; // Onboarding page
 
 export default function App() {
-  //State to manage the current screen ('LandingPage' or 'AppNavigator')
-  const [currentScreen, setCurrentScreen] = useState<'LandingPage' | 'AppNavigator'>('LandingPage');
+  // State to manage the current screen ('LandingPage' or 'AppNavigator')
+  const [currentScreen, setCurrentScreen] = useState<'LandingPage' | 'AppNavigator' | 'OnboardingPage'>('LandingPage');
 
-  //Function to handle the "Start Learning" button action
+  // Function to handle the "Start Learning" button action
   const handleGetStarted = async () => {
-    //Default user data to be saved in AsyncStorage
+    // Default user data to be saved in AsyncStorage
     const newUser = { name: 'Learner', points: 0, streak: 0 };
 
-    //Save the user data in local storage
+    // Save the user data in local storage
     await AsyncStorage.setItem('user', JSON.stringify(newUser));
     
-    //Update the state to transition to the AppNavigator (dashboard)
+    // Update the state to transition to the AppNavigator (dashboard)
+    setCurrentScreen('OnboardingPage');
+  };
+
+   // Function to handle the completion of onboarding
+   const handleCompleteOnboarding = () => {
+    // Update the state to transition to the AppNavigator (dashboard)
     setCurrentScreen('AppNavigator');
   };
 
@@ -26,8 +33,11 @@ export default function App() {
       {currentScreen === 'LandingPage' ? (
         // Show LandingPage and pass the handleGetStarted function as a prop
         <LandingPage onGetStarted={handleGetStarted} />
+      ) : currentScreen === 'OnboardingPage' ? (
+        // Show OnboardingPage and pass the handleCompleteOnboarding function as a prop
+        <OnboardingPage onComplete={handleCompleteOnboarding} />
       ) : (
-        //Show the main app navigator (dashboard)
+        // Show the main app navigator (dashboard)
         <AppNavigator />
       )}
     </View>

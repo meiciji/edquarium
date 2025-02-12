@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -60,25 +60,23 @@ const LanguageArtsCourse = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Ionicons name="book-outline" size={40} color="#FFFFFF" />
-        <Text style={styles.headerText}>Language Arts Adventure</Text>
-        <Text style={styles.headerSubText}>Dive into the world of words and stories!</Text>
-      </View>
-
-      {/* Points Display */}
-      <View style={styles.pointsContainer}>
-        <Text style={styles.pointsText}>Points: {points}</Text>
-      </View>
-
-      {/* Progress Bar Section */}
-      <View style={styles.progressContainer}>
-        <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
-        <View style={styles.customProgressBar}>
-          <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
-        </View>
-        <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
-      </View>
+            <View style={styles.header}>
+              <Image source={require('../../../assets/images/hermit.png')} style={styles.headerImage} />
+            </View>
+      
+            {/* Points Display */}
+            <View style={styles.pointsContainer}>
+              <Text style={styles.title}>Reading Reef</Text>
+              <Text style={styles.pointsText}>Points: {points}</Text>
+            </View>
+      
+            {/* Progress Bar Section */}
+            <View style={styles.progressContainer}>
+              <View style={styles.customProgressBar}>
+                <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
+              </View>
+              <Text style={styles.progressText}>{calculateProgress()}% Complete</Text>
+            </View>
 
       {/* Sections */}
       <ScrollView contentContainerStyle={styles.content}>
@@ -186,13 +184,31 @@ const LanguageArtsCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#fde9e4",
   },
   header: {
-    backgroundColor: "#E64A19",
-    padding: 20,
-    alignItems: "center",
-  },
+        margin: 15,
+        padding: 20,
+        height: 200,
+        width: 400,
+        alignItems: 'center',
+        justifyContent: 'center', // Center content vertically and horizontally
+        backgroundColor: 'white',
+        position: 'relative',
+        flexDirection: 'row',
+        borderRadius: 10,
+        shadowColor: '#BBDEFB', // Blue shadow color
+        shadowOffset: { width: 0, height: 2 }, // Shadow offset
+        shadowOpacity: 1, // Shadow opacity
+        shadowRadius: 4, // Shadow radius
+        overflow: 'hidden', // Ensures the image stays within the rounded corners
+      },
+      headerImage: {
+        ...StyleSheet.absoluteFillObject, // Fills the entire header
+        width: undefined, // Reset width for correct scaling
+        height: undefined, // Reset height for correct scaling
+        resizeMode: 'cover', // Ensures the image covers the space proportionally
+      },  
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
@@ -205,9 +221,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   progressContainer: {
-    padding: 20,
+    padding: 8,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#FFCCBC",
+    marginBottom: 15,
   },
   subText: {
     fontSize: 14,
@@ -217,7 +234,7 @@ const styles = StyleSheet.create({
   customProgressBar: {
     width: "90%",
     height: 10,
-    backgroundColor: "#FFCCBC",
+    backgroundColor: "white",
     borderRadius: 5,
     overflow: "hidden",
   },
@@ -270,16 +287,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#BF360C',
+    marginLeft: 20,
+  },
   pointsContainer: {
     padding: 10,
     backgroundColor: "#FFCCBC",
-    alignItems: "center",
+    flexDirection: "row", // Ensures horizontal layout
+    justifyContent: "space-between", // Pushes content to the right
   },
   pointsText: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 14,
     color: "#BF360C",
+    marginRight: 20,
   }
+  
 });
 
 export default LanguageArtsCourse;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 // Define your navigation types
 type RootStackParamList = {
   MathCourse: undefined;
+  Chatbot: undefined;
   MathGame: { 
     gameMode: "addition" | "subtraction" | "multiplication" | "division"; 
     onPointsUpdate: (newPoints: number) => void; 
@@ -28,24 +29,36 @@ const MathCourse = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Load points and completed sections from AsyncStorage when the component mounts
-  useEffect(() => {
-    const loadPoints = async () => {
-      const savedPoints = await AsyncStorage.getItem("points");
-      if (savedPoints !== null) {
-        setPoints(Number(savedPoints));
-      }
-    };
+useEffect(() => {
+  // Define an asynchronous function to load the saved points
+  const loadPoints = async () => {
+    // Retrieve the value stored under the key "points" from AsyncStorage
+    const savedPoints = await AsyncStorage.getItem("points");
+    
+    // Check if there is a saved value for points (it will return null if not set)
+    if (savedPoints !== null) {
+      // If savedPoints is not null, convert it to a number and set it in state
+      setPoints(Number(savedPoints));
+    }
+  };
 
-    const loadCompletedSections = async () => {
-      const savedSections = await AsyncStorage.getItem("completedSections");
-      if (savedSections !== null) {
-        setCompletedSections(JSON.parse(savedSections));
-      }
-    };
+  // Define an asynchronous function to load the completed sections
+  const loadCompletedSections = async () => {
+    // Retrieve the value stored under the key "completedSections" from AsyncStorage
+    const savedSections = await AsyncStorage.getItem("completedSections");
+    
+    // Check if there is a saved value for completed sections (it will return null if not set)
+    if (savedSections !== null) {
+      // If savedSections is not null, parse the JSON string into an array and set it in state
+      setCompletedSections(JSON.parse(savedSections));
+    }
+  };
 
-    loadPoints();
-    loadCompletedSections();
-  }, []);
+  // Call the functions to load the saved points/sections when the component mounts
+  loadPoints();
+  loadCompletedSections();
+
+}, []);
 
   // Update points and save to AsyncStorage
   const handlePointsUpdate = async (newPoints: number) => {
@@ -71,19 +84,17 @@ const MathCourse = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="rocket-outline" size={40} color="#FFFFFF" />
-        <Text style={styles.headerText}>Math Adventure</Text>
-        <Text style={styles.headerSubText}>Swipe to guide your snake to victory!</Text>
+        <Image source={require('../../../assets/images/jellyfish.png')} style={styles.headerImage} />
       </View>
 
       {/* Points Display */}
       <View style={styles.pointsContainer}>
+        <Text style={styles.title}>Deep Dive into Math!</Text>
         <Text style={styles.pointsText}>Points: {points}</Text>
       </View>
 
       {/* Progress Bar Section */}
       <View style={styles.progressContainer}>
-        <Text style={styles.subText}>Grade 3-4 · 4 Sections</Text>
         <View style={styles.customProgressBar}>
           <View style={[styles.progressFill, { width: `${calculateProgress()}%` }]} />
         </View>
@@ -183,6 +194,16 @@ const MathCourse = () => {
             <Text style={styles.sectionDescription}>Learn about division</Text>
           </View>
         </TouchableOpacity>
+
+        {/* Button */}
+                  {/* Button */}
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => navigation.navigate("Chatbot")}
+        >
+          <Text style={styles.buttonText}>Have questions? Dr. Octo can help!</Text>
+        </TouchableOpacity>
+
       </ScrollView>
 
       {/* Footer Button */}
@@ -196,28 +217,67 @@ const MathCourse = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#def3f7",
   },
   header: {
-    backgroundColor: "#0288D1",
+    margin: 15,
     padding: 20,
-    alignItems: "center",
+    height: 200,
+    width: 400,
+    alignItems: 'center',
+    justifyContent: 'center', // Center content vertically and horizontally
+    backgroundColor: 'white',
+    position: 'relative',
+    flexDirection: 'row',
+    borderRadius: 10,
+    shadowColor: '#BBDEFB', // Blue shadow color
+    shadowOffset: { width: 0, height: 2 }, // Shadow offset
+    shadowOpacity: 1, // Shadow opacity
+    shadowRadius: 4, // Shadow radius
+    overflow: 'hidden', // Ensures the image stays within the rounded corners
+  },
+  headerImage: {
+    ...StyleSheet.absoluteFillObject, // Fills the entire header
+    width: undefined, // Reset width for correct scaling
+    height: undefined, // Reset height for correct scaling
+    resizeMode: 'cover', // Ensures the image covers the space proportionally
+  },  
+  button: {
+    backgroundColor: '#f28d9f',
+    paddingVertical: 16,
+    paddingHorizontal: 35,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    borderWidth: 2,
+    borderColor: '#fff',
+    width: 370,
+    height: 60,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "black",
     marginVertical: 5,
+    marginLeft: 10,
   },
   headerSubText: {
     fontSize: 14,
-    color: "#E1F5FE",
+    color: "black",
     textAlign: "center",
   },
   progressContainer: {
-    padding: 20,
+    padding: 8,
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#BBDEFB",
+    marginBottom: 15,
   },
   subText: {
     fontSize: 14,
@@ -227,7 +287,7 @@ const styles = StyleSheet.create({
   customProgressBar: {
     width: "90%",
     height: 10,
-    backgroundColor: "#BBDEFB",
+    backgroundColor: "white",
     borderRadius: 5,
     overflow: "hidden",
   },
@@ -280,16 +340,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0288D1',
+    marginLeft: 20,
+  },
   pointsContainer: {
     padding: 10,
     backgroundColor: "#BBDEFB",
-    alignItems: "center",
+    flexDirection: "row", // Ensures horizontal layout
+    justifyContent: "space-between", // Pushes content to the right
   },
   pointsText: {
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 14,
     color: "#0288D1",
-  }
+    marginRight: 20,
+  }  
 });
 
 export default MathCourse;
