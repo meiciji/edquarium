@@ -4,7 +4,7 @@ Dive into the world of learning with EdQuarium—the ultimate underwater-themed 
 # How Do I Use EdQuarium?
 Getting started with EdQuarium is as easy as swimming with dolphins! 🐬 Open the app, pick your favorite underwater activity, and dive into an exciting educational experience. Whether you’re practicing spelling, solving puzzles, or exploring new worlds, EdQuarium will keep you entertained and learning every step of the way.
 
-![EdQuarium](https://github.com/meiciji/edquarium/blob/main/images/screenshot.png)
+![EdQuarium](assets/images/screenshot.png)
 
 
 # How Was EdQuarium Created?
