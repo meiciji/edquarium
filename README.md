@@ -4,6 +4,9 @@ Dive into the world of learning with EdQuarium—the ultimate underwater-themed 
 # How Do I Use EdQuarium?
 Getting started with EdQuarium is as easy as swimming with dolphins! 🐬 Open the app, pick your favorite underwater activity, and dive into an exciting educational experience. Whether you’re practicing spelling, solving puzzles, or exploring new worlds, EdQuarium will keep you entertained and learning every step of the way.
 
+![EdQuarium](https://github.com/meiciji/edquarium/blob/main/images/screenshot.png)
+
+
 # How Was EdQuarium Created?
 EdQuarium was created by Mei Tham and Heidi Jeong. We wanted to bring together the magic of the ocean and the power of learning, crafting an app that’s as fun as it is educational. It’s like a treasure chest of knowledge, just waiting to be unlocked!
 
