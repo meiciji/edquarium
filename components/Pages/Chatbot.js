@@ -13,58 +13,68 @@ const Chatbot = () => {
   };
 
   const handleSendMessage = async () => {
-
+    if (!userMessage.trim()) return; // Prevent sending empty messages
+  
     // Add the user message to the chat
-    const newMessages = [
-      ...messages,
-      { sender: 'user', text: userMessage },
-    ];
+    const newMessages = [...messages, { sender: "user", text: userMessage }];
     setMessages(newMessages);
     setUserMessage("");
     setIsTyping(true);
-
-    try {
-      // Make an API call to OpenAI's GPT-3 (or GPT-4) model
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions', 
-        {
-          model: 'gpt-4o-mini', 
-          messages: [
-            { role: 'user', content: userMessage },
-          ],
-          max_tokens: 300,
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer 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`, 
+  
+    let retries = 3; // Retry up to 3 times if we hit a rate limit
+    while (retries > 0) {
+      try {
+        const response = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o-mini",
+            messages: [{ role: "user", content: userMessage }],
+            max_tokens: 300,
+            temperature: 0.7,
           },
+          {
+            headers: {
+              Authorization: `Bearer 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`, // Move this to a backend
+            },
+          }
+        );
+  
+        // Add AI response to the chat
+        const aiResponse = {
+          sender: "ai",
+          text: response.data.choices[0].message.content.trim(),
+        };
+  
+        setMessages((prevMessages) => [...prevMessages, aiResponse]);
+        setIsTyping(false);
+        return;
+      } catch (error) {
+        if (error.response?.status === 429) {
+          console.warn("Rate limit hit. Retrying in 2 seconds...");
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        } else {
+          console.error("Error fetching AI response:", error);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { sender: "ai", text: "Sorry, something went wrong. Please try again later." },
+          ]);
+          setIsTyping(false);
+          return;
         }
-      );
-
-      const aiResponse = {
-        sender: 'ai',
-        text: response.data.choices[0].message.content.trim(),
-      };
-
-      setMessages((prevMessages) => [...prevMessages, aiResponse]);
-      setIsTyping(false);
-    } catch (error) {
-      console.error("Error fetching AI response: ", error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { sender: 'ai', text: "Sorry, something went wrong." },
-      ]);
-      setIsTyping(false);
+      }
+      retries--;
     }
+  
+    setIsTyping(false);
   };
+  
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Text style={styles.header}>Have a question? Chat with AI!</Text>
+      <Text style={styles.header}>Have a question? Chat with Dr. Octo!</Text>
 
       <ScrollView style={styles.messagesContainer}>
         {messages.map((message, index) => (

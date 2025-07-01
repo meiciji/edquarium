@@ -15,20 +15,24 @@ prepare_react_native_project!
 
 target 'educationapp' do
   use_expo_modules!
-  
+
+  # Firebase dependencies
   pod 'Firebase', :modular_headers => true
-    pod 'FirebaseCoreInternal', :modular_headers => true
-    pod 'GoogleUtilities', :modular_headers => true
-    pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseAnalytics', :modular_headers => true
+  pod 'FirebaseAuth', :modular_headers => true
+  pod 'FirebaseFirestore', :modular_headers => true
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
-    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"]
   else
     config_command = [
       'node',
       '--no-warnings',
       '--eval',
-      'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
+      'require(require.resolve("expo-modules-autolinking", { paths: [require.resolve("expo/package.json")] }))(process.argv.slice(1))',
       'react-native-config',
       '--json',
       '--platform',
@@ -38,15 +42,13 @@ target 'educationapp' do
 
   config = use_native_modules!(config_command)
 
-  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
-  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
+  use_frameworks! :linkage => podfile_properties['ios.useFrameworks']&.to_sym || :static
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
-    # An absolute path to your application root.
+    :hermes_enabled => podfile_properties['expo.jsEngine'].nil? || podfile_properties['expo.jsEngine'] == 'hermes',
     :app_path => "#{Pod::Config.instance.installation_root}/..",
-    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
+    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false'
   )
 
   post_install do |installer|
@@ -57,13 +59,44 @@ target 'educationapp' do
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
 
-    # This is necessary for Xcode 14, because it signs resource bundles by default
-    # when building for devices.
-    installer.target_installation_results.pod_target_installation_results
-      .each do |pod_name, target_installation_result|
-      target_installation_result.resource_bundle_targets.each do |resource_bundle_target|
-        resource_bundle_target.build_configurations.each do |config|
-          config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+    # Flipper workaround
+    installer.pods_project.targets.each do |target|
+      if target.name == 'Flipper'
+        target.build_configurations.each do |config|
+          config.build_settings['OTHER_CFLAGS'] = '-DFB_SONARKIT_ENABLED=1'
+        end
+      end
+    end
+
+    # Header search paths for fmt + folly
+    installer.pods_project.targets.each do |target|
+      if target.name == 'RCT-Folly'
+        target.build_configurations.each do |config|
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+          config.build_settings['HEADER_SEARCH_PATHS'] += ' $(PODS_ROOT)/fmt/include'
+          config.build_settings['HEADER_SEARCH_PATHS'] += ' $(PODS_ROOT)/RCT-Folly'
+          config.build_settings['HEADER_SEARCH_PATHS'] += ' $(PODS_ROOT)/boost'
+          config.build_settings['HEADER_SEARCH_PATHS'] += ' $(PODS_ROOT)/DoubleConversion'
+          config.build_settings['HEADER_SEARCH_PATHS'] += ' $(PODS_ROOT)/glog'
+        end
+      end
+    end
+
+    # Fix for Swift access level import on Firebase / GoogleUtilities
+    experimental_import_targets = [
+      'FirebaseCoreInternal',
+      'GoogleUtilities',
+      'FirebaseCore',
+      'FirebaseAnalytics',
+      'FirebaseAuth',
+      'FirebaseFirestore'
+    ]
+
+    installer.pods_project.targets.each do |target|
+      if experimental_import_targets.include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['OTHER_SWIFT_FLAGS'] ||= '$(inherited)'
+          config.build_settings['OTHER_SWIFT_FLAGS'] += ' -Xfrontend -enable-experimental-feature -Xfrontend AccessLevelOnImport'
         end
       end
     end

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Linking, ImageBackground, Alert } from 'react-native';
 import { useNavigation, NavigationProp, useFocusEffect, DrawerActions } from '@react-navigation/native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // For saving and retrieving data locally
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { LinearGradient } from 'expo-linear-gradient';
 
 // Type definition for completed sections in different subjects
@@ -35,8 +35,8 @@ export default function Dashboard() {
   const [userName, setUserName] = useState('');
 
   // State hooks to store data like achievements, points, and completed sections
-  const [achievementsList, setAchievementsList] = useState<string[]>([]); // List of achievements
-  const [totalPoints, setTotalPoints] = useState<number>(0); // User's total points
+  const [achievementsList, setAchievementsList] = useState<string[]>([]); 
+  const [totalPoints, setTotalPoints] = useState<number>(0); 
   const [completedSections, setCompletedSections] = useState<CompletedSections>({
     addition: false,
     subtraction: false,
@@ -131,7 +131,7 @@ export default function Dashboard() {
   // Function to handle sharing achievements on social media
   const handleShare = async (platform: string) => {
     //A default message is set to advertise our app and the user's achievement.
-    const message = 'I just earned 100 points on EdQuest, the ultimate educational app! 🎉 Join me on this learning adventure!';
+    const message = 'I just earned 100 points on EdQuarium, the ultimate educational app! 🎉 Join me on this learning adventure!';
     let url = '';
 
     // Set the URL depending on the selected platform to load the default messgae into the social media platofrm
@@ -147,10 +147,10 @@ export default function Dashboard() {
         if (supported) {
           await Linking.openURL(url); // Open the URL if supported
         } else {
-          console.error('Unsupported URL:', url); // Log if the URL is unsupported
+          console.error('Unsupported URL:', url);
         }
       } catch (error) {
-        console.error('Error sharing:', error); // Log any errors encountered during sharing
+        console.error('Error sharing:', error);
       }
     }
   };
@@ -166,7 +166,7 @@ export default function Dashboard() {
     if (!achievementsList.includes(newAchievement)) {
       const updatedAchievements = [...achievementsList, newAchievement];
       setAchievementsList(updatedAchievements); // Update the state with the new list
-      await AsyncStorage.setItem('achievements', JSON.stringify(updatedAchievements)); // Save to AsyncStorage
+      await AsyncStorage.setItem('achievements', JSON.stringify(updatedAchievements)); // Save the updated achievements to AsyncStorage
     }
   };
 
@@ -181,10 +181,10 @@ export default function Dashboard() {
     <View style={{flex:1}}>
     <ImageBackground
       source={require('../../assets/images/underwater.png')}
-      style={[styles.background]} // Ensure it takes up the full screen
+      style={[styles.background]} 
     >
     <LinearGradient
-  colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.2)']} // Lighter white with less opacity
+  colors={['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.2)']}
     style={styles.gradientOverlay}
   />
   <ScrollView style={styles.container}>
@@ -197,7 +197,7 @@ export default function Dashboard() {
       </View>
       <TouchableOpacity onPress={() => navigation.navigate('Chatbot')}>
       <Image
-        source={require('../../assets/images/1.png')} // Adjust the path to your mascot image
+        source={require('../../assets/images/1.png')}
         style={styles.mascotImage}
       />
       </TouchableOpacity>
@@ -287,10 +287,10 @@ export default function Dashboard() {
   
   const styles = StyleSheet.create({
     background: {
-      flex: 1, // Ensures the background covers the full screen
+      flex: 1, 
     },
     gradientOverlay: {
-      ...StyleSheet.absoluteFillObject, // Ensures the gradient covers the entire screen
+      ...StyleSheet.absoluteFillObject,
     },
     container: {
       flex: 1,
@@ -454,8 +454,8 @@ export default function Dashboard() {
       fontWeight: 'bold',
       color: '#FFFFFF',
       textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 5,
+      textShadowOffset: { width: 3, height: 3 },
+      textShadowRadius: 5,
     },
     summaryContainer: {
       flexDirection: 'row',

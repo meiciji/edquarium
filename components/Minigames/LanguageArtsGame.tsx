@@ -50,18 +50,18 @@ const LanguageArtsGame = ({ route, navigation }: { route: { params: RouteParams 
     if (isCorrect) {
       setAnswerFeedback("Correct! Well done!");
       setTimeout(() => {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setAnswerFeedback(null);
-        setInputText(""); // Reset input text
-      }, 1500);
+        // If this was the last question, mark game as complete
+        if (currentQuestionIndex === questions.length - 1) {
+          setGameComplete(true);
+          onGameComplete(gameMode);
+        } else {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          setAnswerFeedback(null);
+          setInputText(""); // Reset input text
+        }
+      }, 400);
     } else {
       setAnswerFeedback("Oops! Try again.");
-    }
-
-    // Check if all questions are answered
-    if (currentQuestionIndex === questions.length - 1) {
-      setGameComplete(true); // Mark the game as complete
-      onGameComplete(gameMode); // Call onGameComplete when the game is complete
     }
   };
 
@@ -409,77 +409,64 @@ const generateQuestions = (mode: string) => {
     }
   };  
 
-  const SpellingQuestion: React.FC<SpellingQuestionProps> = ({ question, onComplete }) => {
-    const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
-    const [feedback, setFeedback] = useState<string | null>(null);
-  
-    const letters = [...question.correctWord.toUpperCase(), ...'XAFJLIO']; // Example extra letters, shuffle these later.
+  const SpellingQuestion: React.FC<SpellingQuestionProps> = ({ question, inputText, setInputText, onComplete }) => {
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-    const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
-
-    // Shuffle letters when the component mounts
-    useEffect(() => {
-      const allLetters = [...question.correctWord.toUpperCase(), ...'XAFJLIO']; // Add extra letters
-      setShuffledLetters(shuffleArray(allLetters)); // Shuffle the combined letters
-    }, [question]);
-
-    // Fisher-Yates shuffle algorithm
-    const shuffleArray = (array: string[]): string[] => {
-      const newArray = [...array];
-      for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-      }
-      return newArray;
-    };
-  
-    const handleLetterPress = (letter: string) => {
-      if (selectedLetters.length < question.correctWord.length) {
-        setSelectedLetters([...selectedLetters, letter]);
-      }
-    };
-  
-    const handleSubmit = () => {
-      const isCorrect = selectedLetters.join('').toLowerCase() === question.correctWord.toLowerCase();
-      setFeedback(isCorrect ? 'Correct! 🎉' : 'Incorrect. Try again. ❌');
-      onComplete(isCorrect);
-      if (isCorrect) {
-        setTimeout(() => {
-          setFeedback(null);
-          setSelectedLetters([]);
-        }, 2000); // Clear feedback and reset after 2 seconds if correct
-      } else {
-        //clear
-        setSelectedLetters([]);
-      }
-    };
-  
-    return (
-      <View style={styles.container}>
-        <Text style={styles.questionText}>Which animal is this?</Text>
-        <Image source={question.image} style={styles.image} />
-        <View style={styles.wordContainer}>
-          {question.correctWord.split('').map((_, index) => (
-            <Text key={index} style={styles.letterBox}>
-              {selectedLetters[index] || '_'}
-            </Text>
-          ))}
-        </View>
-        <View style={styles.lettersContainer}>
-          {shuffledLetters.map((letter, index) => (
-            <TouchableOpacity key={index} style={styles.letterButton} onPress={() => handleLetterPress(letter)}>
-              <Text style={styles.letterText}>{letter}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitText}>Submit</Text>
-        </TouchableOpacity>
-        {feedback && <Text style={styles.feedbackText}>{feedback}</Text>}
-      </View>
-    );
+  // Validate input: only lowercase English letters allowed
+  const handleChangeText = (text: string) => {
+    if (/^[a-z]*$/.test(text)) {
+      setInputText(text);
+      setError(null);
+    } else {
+      setError("Please use only lowercase English letters (a-z).");
+    }
   };
-  
+
+  const handleSubmit = () => {
+    if (!inputText) {
+      setFeedback("Please enter a word.");
+      return;
+    }
+    if (inputText.length !== question.correctWord.length) {
+      setFeedback("Check the word length!");
+      return;
+    }
+    if (error) {
+      setFeedback("Fix the input error before submitting.");
+      return;
+    }
+    const isCorrect = inputText === question.correctWord;
+    setFeedback(isCorrect ? "Correct! 🎉" : "Incorrect. Try again. ❌");
+    setTimeout(() => {
+      setFeedback(null);
+      setInputText("");
+      onComplete(isCorrect);
+    }, 800);
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.questionText}>Which animal is this?</Text>
+      <Image source={question.image} style={styles.image} />
+      <TextInput
+        style={styles.spellingInput}
+        value={inputText}
+        onChangeText={handleChangeText}
+        autoCapitalize="none"
+        autoCorrect={false}
+        placeholder="Type the word"
+        maxLength={question.correctWord.length}
+        keyboardType="default"
+      />
+      {error && <Text style={{ color: "red", marginBottom: 10 }}>{error}</Text>}
+      {feedback && <Text style={styles.feedbackText}>{feedback}</Text>}
+      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <Text style={styles.submitText}>Submit</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const Question = ({ question, onAnswerSelected, selectedAnswer, onComplete }: any) => {
   const handleAnswerSelect = (answer: string) => {
@@ -633,6 +620,21 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#FFF",
     fontSize: 16,
+  },
+  spellingInput: {
+    width: 160,
+    height: 40,
+    fontSize: 22,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 8,
+    textAlign: 'center',
+    paddingVertical: 0,
+    textAlignVertical: 'center', // for Android
+    paddingTop: 8, // for iOS vertical centering
+    paddingBottom: 8, // for iOS vertical centering
+    marginBottom: 10,
   },
   score: {
     fontSize: 24,

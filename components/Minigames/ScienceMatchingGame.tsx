@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from "react-na
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ScrollView } from "react-native";
 
 // Define the navigation types for your app
 type RootStackParamList = {
@@ -221,48 +222,85 @@ const ScienceMatchingGame: React.FC<ScienceMatchingGameProps> = ({ route, naviga
   const onStartGame = () => {
     setShowInstructions(false);
   };
-  
-  return (
-    <View style={styles.container}>
-      {showInstructions ? (
-        <InstructionScreen onStartGame={onStartGame} />
-      ) : (
-        <>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>
-              Matching Game - {gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}
-            </Text>
-          </View>
+  const termCards = cards.filter(card => card.type === "term");
+  const definitionCards = cards.filter(card => card.type === "definition");
 
-          <View style={styles.cardsContainer}>
-            {cards.map((card, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.card, { borderColor: cardColors[index] }]} // Apply the unique color to each card
-                onPress={() => handleCardClick(index)}
-                disabled={matches[index]}
-              >
-                <Text style={styles.cardText}>
-                  {flippedCards.includes(index) || matches[index] ? card.content : "?"}
-                </Text>
-                {(flippedCards.includes(index) || matches[index]) && card.type === "term" && (
-                  <Image
-                  source={typeof card.image === "string" ? { uri: card.image } : card.image}
-                  style={styles.cardImage}
-                />                
-                )}
 
-              </TouchableOpacity>
-            ))}
+return (
+  <View style={styles.container}>
+    {showInstructions ? (
+      <InstructionScreen onStartGame={onStartGame} />
+    ) : (
+      <ScrollView
+        contentContainerStyle={{ alignItems: "center", paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerText}>
+            Matching Game - {gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}
+          </Text>
+        </View>
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 20 }}>
+          {/* Left column: Terms with images */}
+          <View style={{ flex: 1, alignItems: "flex-end" }}>
+            {termCards.map((card) => {
+              const cardIndex = cards.findIndex(c => c.id === card.id);
+              const isFlipped = flippedCards.includes(cardIndex) || matches[cardIndex];
+              return (
+                <TouchableOpacity
+                  key={card.id}
+                  style={[styles.card, { borderColor: cardColors[cardIndex] }]}
+                  onPress={() => handleCardClick(cardIndex)}
+                  disabled={matches[cardIndex] || isFlipped}
+                >
+                  {isFlipped ? (
+                    <>
+                      <Image
+                        source={typeof card.image === "string" ? { uri: card.image } : card.image}
+                        style={styles.cardImage}
+                      />
+                      <Text style={styles.cardText}>{card.content}</Text>
+                    </>
+                  ) : (
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={{ fontSize: 32, color: "#bbb" }}>?</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
-
-          <View style={styles.pointsContainer}>
-            <Text style={styles.pointsText}>Points: {points}</Text>
+          {/* Right column: Definitions */}
+          <View style={{ flex: 1, alignItems: "flex-start" }}>
+            {definitionCards.map((card) => {
+              const cardIndex = cards.findIndex(c => c.id === card.id);
+              const isFlipped = flippedCards.includes(cardIndex) || matches[cardIndex];
+              return (
+                <TouchableOpacity
+                  key={card.id}
+                  style={[styles.card, { borderColor: cardColors[cardIndex] }]}
+                  onPress={() => handleCardClick(cardIndex)}
+                  disabled={matches[cardIndex] || isFlipped}
+                >
+                  {isFlipped ? (
+                    <Text style={styles.cardText}>{card.content}</Text>
+                  ) : (
+                    <View style={{ alignItems: "center" }}>
+                      <Text style={{ fontSize: 32, color: "#bbb" }}>?</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        </>
-      )}
-    </View>
-  );
+        </View>
+        <View style={styles.pointsContainer}>
+          <Text style={styles.pointsText}>Points: {points}</Text>
+        </View>
+      </ScrollView>
+    )}
+  </View>
+);
 };
 
 const styles = StyleSheet.create({

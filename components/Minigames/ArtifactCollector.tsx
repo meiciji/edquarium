@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ImageSourcePropType } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ImageSourcePropType, ImageBackground } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -19,24 +19,24 @@ type ArtifactCollectorProps = {
 };
 
 const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation }) => {
-  const { gameMode, onGameComplete } = route.params; // Retrieve the game mode, setTotalPoints, and onGameComplete from the params
-  const [points, setPoints] = useState(0); // Points for current game session
+  const { gameMode, onGameComplete } = route.params; 
+  const [points, setPoints] = useState(0); 
   const [artifactIndex, setArtifactIndex] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0); // Add totalPoints state
+  const [totalPoints, setTotalPoints] = useState(0); 
   const [showError, setShowError] = useState(false);
   const [showStory, setShowStory] = useState(false);
-  const [modes, setModes] = useState<any[]>([]); // Initialize as an empty array to avoid undefined errors
-  const [artifact, setArtifact] = useState<string | null>(null); // State for storing artifact
-  const [artifactImage, setArtifactImage] = useState<ImageSourcePropType>(); // State for storing the image (using ImageSourcePropType)
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [gameOver, setGameOver] = useState(false); // State to track if the game is over
-  const [showInstructions, setShowInstructions] = useState(true); // State to control instruction screen visibility
+  const [modes, setModes] = useState<any[]>([]); 
+  const [artifact, setArtifact] = useState<string | null>(null); 
+  const [artifactImage, setArtifactImage] = useState<ImageSourcePropType>(); 
+  const [loading, setLoading] = useState(true); 
+  const [gameOver, setGameOver] = useState(false); 
+  const [showInstructions, setShowInstructions] = useState(true); 
 
   // Artifact mapping based on the game mode
   const artifactMapping: Record<string, { name: string, image: ImageSourcePropType }> = {
     "Ancient History": {
       name: "Golden Ankh",
-      image: require('../../assets/images/ankh.jpg'), // Local image path (adjust path accordingly)
+      image: require('../../assets/images/ankh.jpg'), 
     },
     "Medieval": {
       name: "Excalibur Sword",
@@ -192,7 +192,7 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
       });
 
       setModes(gameData);
-      setLoading(false); // Stop loading once data is set
+      setLoading(false);
     };
 
     loadGameData();
@@ -261,60 +261,72 @@ const ArtifactCollector: React.FC<ArtifactCollectorProps> = ({ route, navigation
       };
 
   return (
-    <View style={styles.container}>
+    <>
       {showInstructions ? (
-        <InstructionScreen onStartGame={onStartGame} />
+        <View style={styles.container}>
+          <InstructionScreen onStartGame={onStartGame} />
+        </View>
       ) : (
-        <>
-          <Text style={styles.title}>{gameMode} Quiz</Text>
-          {loading ? (
-            <Text>Loading...</Text>
-          ) : (
-            <>
-              <Text style={styles.points}>Points: {points}</Text>
-              {gameOver ? (
-                <View style={styles.finalScreen}>
-                  <Text style={styles.message}>Game Over! You've earned a {artifact}</Text>
-                  <Image source={artifactImage} style={styles.artifactImage} />
-                  <TouchableOpacity style={styles.button} onPress={handleSaveAndExit}>
-                    <Text style={styles.buttonText}>Save and Exit</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.message}>Total Points: {totalPoints}</Text>
-                </View>
-              ) : (
-                <View>
-                  <Text style={styles.question}>{modes[artifactIndex].question}</Text>
-                  {modes[artifactIndex].options.map((option: string, index: number) => (
-                    <TouchableOpacity key={index} onPress={() => handleAnswer(option)}>
-                      <Text style={styles.option}>{option}</Text>
+        <ImageBackground
+          source={require('../../assets/images/historical.jpg')} 
+          style={styles.background}
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>{gameMode} Quiz</Text>
+            {loading ? (
+              <Text>Loading...</Text>
+            ) : (
+              <>
+                <Text style={styles.points}>Points: {points}</Text>
+                {gameOver ? (
+                  <View style={styles.finalScreen}>
+                    <Text style={styles.message}>Game Over! You've earned a {artifact}</Text>
+                    <Image source={artifactImage} style={styles.artifactImage} />
+                    <TouchableOpacity style={styles.button} onPress={handleSaveAndExit}>
+                      <Text style={styles.buttonText}>Save and Exit</Text>
                     </TouchableOpacity>
-                  ))}
-                  {showStory && <Text style={styles.story}>{modes[artifactIndex].story}</Text>}
-                  {showError && <Text style={styles.error}>Wrong answer, try again!</Text>}
-                </View>
-              )}
-            </>
-          )}
-        </>
+                    <Text style={styles.message}>Total Points: {totalPoints}</Text>
+                  </View>
+                ) : (
+                  <View>
+                    <Text style={styles.question}>{modes[artifactIndex].question}</Text>
+                    {modes[artifactIndex].options.map((option: string, index: number) => (
+                      <TouchableOpacity key={index} onPress={() => handleAnswer(option)}>
+                        <Text style={styles.option}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                    {showStory && <Text style={styles.story}>{modes[artifactIndex].story}</Text>}
+                    {showError && <Text style={styles.error}>Wrong answer, try again!</Text>}
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </ImageBackground>
       )}
-    </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
   },
+  background: {
+    flex: 1,
+    resizeMode: "cover",
+  },
   slide: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff", // Background color for the slide
+    backgroundColor: "#fff", 
     padding: 20,
     marginTop: 45,
+    width: "100%",
+    height: "100%"
   },
   image: {
     width: 400,
@@ -362,7 +374,7 @@ const styles = StyleSheet.create({
   option: {
     fontSize: 18,
     padding: 10,
-    backgroundColor: "#d3d3d3",
+    backgroundColor: "#fff",
     marginBottom: 10,
     borderRadius: 5,
     textAlign: "center",

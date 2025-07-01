@@ -95,7 +95,7 @@ const HistoryCourse = () => {
           />
           <View>
             <Text style={styles.sectionTitle}>1. Ancient Times Adventure</Text>
-            <Text style={styles.sectionDescription}>Discover the pyramids and castles of the past!</Text>
+            <Text style={styles.sectionDescription}>Discover the landmarks of the past!</Text>
           </View>
         </TouchableOpacity>
 
@@ -137,7 +137,7 @@ const HistoryCourse = () => {
           />
           <View>
             <Text style={styles.sectionTitle}>3. Modern Era Discoveries</Text>
-            <Text style={styles.sectionDescription}>Learn about innovations that shaped our world!</Text>
+            <Text style={styles.sectionDescription}>Learn about innovations in our world!</Text>
           </View>
         </TouchableOpacity>
 

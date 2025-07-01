@@ -11,7 +11,7 @@ const onboardingData = [
     backgroundColor: "#FDF6E3",
     title: "Welcome to EdQuarium!",
     description: "Please enter your name to get started.",
-    image: require("../../assets/images/puffer.png"), // Replace with your image
+    image: require("../../assets/images/puffer.png"),
     buttonText: "Next",
   },
   {
@@ -19,7 +19,7 @@ const onboardingData = [
     backgroundColor: "#FDEFEF",
     title: "Learn through play",
     description: "Explore courses in Math, Reading, Science, and History. Track your progress and earn achievements as you master new skills!",
-    image: require("../../assets/images/crab.png"), // Replace with your image
+    image: require("../../assets/images/crab.png"),
     buttonText: "Next",
   },
   {
@@ -27,7 +27,7 @@ const onboardingData = [
     backgroundColor: "#EDF7F1",
     title: "Let's dive in!",
     description: "You can also ask our friendly AI chatbot for tips or share your journey on social media.",
-    image: require("../../assets/images/stingray.png"), // Replace with your image
+    image: require("../../assets/images/stingray.png"), 
     buttonText: "Let's Start",
   },
 ];
@@ -39,7 +39,7 @@ interface OnboardingScreenProps {
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [name, setName] = useState("");
-  const scrollViewRef = React.useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
 
   const handleScroll = (event: { nativeEvent: { contentOffset: { x: any; }; }; }) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
@@ -47,7 +47,6 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     setCurrentIndex(newIndex);
   };
 
-  
   const handleNext = async () => {
     if (currentIndex === 0) {
       if (!name) {
@@ -60,7 +59,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     if (currentIndex < onboardingData.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
-      scrollViewRef.current?.scrollToPosition(0, nextIndex * width, true);
+      scrollViewRef.current?.scrollTo({ x: nextIndex * width, animated: true });
     } else {
       onComplete();
     }
@@ -68,9 +67,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
   return (
     <KeyboardAwareScrollView
-      ref={scrollViewRef}
+      style={styles.container}
     >
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
